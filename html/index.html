@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Dennis-Black</title>
+    <style>
+        body {
+          font-family: Arial, sans-serif;
+          margin: 0;
+          padding: 0;
+        }
+
+        .logo {
+          height: 40px;
+          margin: 7px;
+
+        }
+
+        header {
+          background-color: #333;
+          color: #fff;
+          padding: 1rem;
+        }
+
+        nav ul {
+          float: right;
+          list-style: none;
+          display: flex;
+        }
+
+        nav li {
+        	margin-right: 1rem;
+        }
+
+        /* hover 導航欄效果 */
+        li a:hover{ 
+          background-color: #fff;
+          border-radius: 4px;
+          color: #736f6f;
+        }
+
+        nav a {
+          text-decoration: none;
+          color: #fff;
+          font-size: 16px;
+        }
+
+        section {
+       	  padding: 2rem;
+        }
+
+        #home {
+        	background-color: #f0f0f0;
+        }
+
+        #portfolio .portfolio-item {
+        	margin-bottom: 2rem;
+        }
+
+        footer {
+			/* position: ;
+			bottom: 0;
+			width: 100%; */
+			/* left: 0; */
+			padding: 1rem;
+			text-align: center;
+			background-color: #333;
+			color: #fff;
+        }
+
+        @media screen and (max-width: 600px) {
+          header {
+            background-color: #333;
+            color: #fff;
+            padding-bottom: 60px;
+            /* height: 50px; */
+          }
+          nav a{
+            text-decoration: none;
+            color: #fff;
+            font-size: 14px;
+          }
+        }
+
+    </style>
+</head>
+  <body>
+    <header>
+      <nav>
+        <a href="https://dennis-black.github.io/website/index.html"><img class="logo" src="./assets/blackcatstudio_banner.png"></a>
+        <ul>
+          <li><a href="index.html" style="color: #99c2ff; font-weight: bolder;">首頁</a></li>
+          <li><a href="login.php">登入</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <!-- /////////////////////////////////////////////////////////////// -->
+
+    <section id="home">
+      <h1>歡迎蒞臨黑貓工作室於 國立屏東大學資訊工程學系計算機中心
+      架設的網站</br>Welcome to the website of Black-Cat Studio host on
+      NPTU CSIE work station server</h1>
+    </section>
+
+    <section id="intro">
+      <h2>網站介紹頁</h2>
+      <p>哈囉，探險家，歡迎來到黑貓工作室的網站，去網站的每個角落看看吧！</br></br>
+      前往<a href="https://dennis-black.github.io/website/index.html" target="_blank">黑貓工作室 GitHub Page 首頁</a>
+      
+      </p>
+    </section>
+    <!-- /////////////////////////////////////////////////////////////// -->
+    <footer>
+      <p>&copy; 2023 黑貓工作室</p>
+    </footer>
+  </body>
+</html>
