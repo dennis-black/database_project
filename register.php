@@ -30,6 +30,125 @@
 
     <!-- Template Stylesheet -->
     <link href="css/style.css" rel="stylesheet">
+    <?php
+		session_start();
+
+		if (!isset($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+
+		include "database_connection.php";
+
+		if ($_SERVER['REQUEST_METHOD'] === "POST"){
+
+			if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) { //檢查cfrs令牌
+				die("CSRF token validation failed");
+			}
+
+			$userRealName = $_POST['userRealName']?? '';
+            $email = $_POST['email'] ?? '';
+            $phoneNumber = $_POST['phoneNumber']?? '';
+            $bloodType = $_POST['bloodType']?? '';
+            $birthday = $_POST['birthday']?? '';
+            $username = $_POST['username']?? '';
+			$password = $_POST['password'] ?? '';
+			$confirmPassword = $_POST['confirmPassword'] ?? '';
+			
+			$errors = '';
+            if (empty($userRealName)) {
+				$errors .= "使用者姓名不得為空\\n";
+			} else if (strlen($userRealName) < 2 || strlen($userRealName) > 20) {
+				$errors .= "使用者姓名的長度必須至少2個字元且少於20個字元\\n";
+			}
+			
+			if (empty($email)) {
+				$errors .= "電子郵箱不得為空\\n";
+			} else if (strlen($email) < 4 || strlen($email) > 50) {
+				$errors .= "電子郵箱的長度必須至少4個字元且少於50個字元\\n";
+			}
+
+            if (empty($phoneNumber)) {
+				$errors .= "手機號碼不得為空\\n";
+			} else if (strlen($phoneNumber) != 10) {
+				$errors .= "手機號碼的長度必須等於10個字元\\n";
+			}
+
+            if ($bloodType == "你的血型")
+				$errors .= "未選擇血型，請選擇血型\\n";
+
+            if (empty($birthday)) { //證實生日的格式
+                $errors .= "生日錯誤，你不可能在今天或或是未來出生\\n";
+            } 
+
+            if (empty($username)) {
+				$errors .= "使用者名稱不得為空\\n";
+			} else if (strlen($username) < 4 || strlen($username) > 20) {
+				$errors .= "使用者ID的長度必須至少4個字元且少於20個字元\\n";
+			}
+			
+			if (empty($password)) {
+				$errors .= "你的密碼不得為空\\n";
+			} else if (strlen($password) < 4 || strlen($password) > 50) {
+				$errors .= "密碼的長度必須至少4個字元且少於50個字元\\n";
+			}
+			
+			if (empty($confirmPassword)) {
+				$errors .= "再次輸入密碼不得為空\\n";
+			} else if ($password != $confirmPassword) {
+				$errors .= "你的密碼與再次確認密碼不同，請確保他們是相同的\\n";
+			} else if (strlen($confirmPassword) < 4 || strlen($confirmPassword) > 50) {
+				$errors .= "確認密碼的長度必須至少4個字元且少於50個字元\\n";
+			}
+
+			if(empty($errors)){
+				$checkUser = $db->prepare("SELECT COUNT(*) FROM users WHERE username = :username");
+				$checkUser -> bindParam(':username', $username);
+				$checkUser -> execute();
+
+				if($checkUser->fetchColumn() > 0) $errors.= "使用者名稱已經被註冊\\n";
+
+				$checkEmail = $db->prepare("SELECT COUNT(*) FROM users WHERE email = :email");
+				$checkEmail -> bindParam(':email', $email);
+				$checkEmail -> execute();
+
+				if($checkEmail->fetchColumn() > 0) $errors.= "電子郵箱已經被註冊\\n";
+			}
+
+            //echo "<script>alert('+$role+'\n'+$userRealName+'\n'+$email+'\n'+$phoneNumber+'\n'+$bloodType+'\n'+$birthday+'\n'+$username +'\n'+ $password+');</script>";
+			
+			if (!empty($errors)) echo "<script>alert('$errors');</script>";
+			else {
+				if (!empty($password)&&(strlen($password)>=4)&&(strlen($password)<=50)) {
+					$hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+                    // echo "<script>
+					// 		alert('密碼加密');
+					// 	</script>";
+				}
+
+				try {
+					$stmt = $db->prepare("INSERT INTO users (role, userRealName, email, phoneNumber, bloodType, birthday, username, password) VALUES (:role, :userRealName, :email, :phoneNumber, :bloodType, :birthday, :username, :password)");
+					$role = 'user';
+					$stmt->bindParam(':role', $role);
+                    $stmt->bindParam(':userRealName', $userRealName);
+                    $stmt->bindParam(':email', $email);
+					$stmt->bindParam(':phoneNumber', $phoneNumber);
+					$stmt->bindParam(':bloodType', $bloodType);
+                    $stmt->bindParam(':birthday', $birthday);
+                    $stmt->bindParam(':username', $username);
+					$stmt->bindParam(':password', $hashedPassword);
+					$stmt->execute();
+				
+					echo "<script>
+							alert('使用者註冊成功');
+							setTimeout(function() {
+								window.location.href = 'login.php';
+							}, 0);
+						</script>";
+
+				} catch (PDOException $e) {
+					echo "資料庫錯誤: " . $e->getMessage();
+				}
+			}
+		}
+	?>
 </head>
 
 <body>
@@ -68,7 +187,7 @@
 
     <!-- Navbar Start -->
     <nav class="navbar navbar-expand-lg bg-white navbar-light sticky-top p-0 wow fadeIn" data-wow-delay="0.1s">
-        <a href="index.html" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
+        <a href="index.php" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
             <h1 class="m-0 text-primary"><i class="far fa-hospital me-3"></i>丹尼斯的保鮮盒</h1>
         </a>
         <button type="button" class="navbar-toggler me-4" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
@@ -76,10 +195,10 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarCollapse">
             <div class="navbar-nav ms-auto p-4 p-lg-0">
-                <a href="index.html" class="nav-item nav-link active">首頁</a>
-                <a href="about.html" class="nav-item nav-link">關於我們</a>
+                <a href="index.php" class="nav-item nav-link active">首頁/關於</a>
+                <!-- <a href="aboutUs" class="nav-item nav-link">關於我們</a> -->
             </div>
-            <a href="" class="btn btn-primary rounded-0 py-4 px-lg-5 d-none d-lg-block">登入/註冊<i class="fa fa-arrow-right ms-3"></i></a>
+            <a href="login.php" class="btn btn-primary rounded-0 py-4 px-lg-5 d-none d-lg-block">登入/註冊<i class="fa fa-arrow-right ms-3"></i></a>
         </div>
     </nav>
     <!-- Navbar End -->
@@ -90,6 +209,59 @@
         
     </div>
     <!-- Header End -->
+
+    <div>
+    <div class="col-lg-6 wow fadeInUp" data-wow-delay="0.5s">
+    <!-- <h1 class="mb-4">註冊新帳號</h1> -->
+    <div class="bg-light rounded h-100 d-flex align-items-center p-5">
+        <form action="register.php" method="post" autocomplete="off">
+            <div class="row g-3">
+                <h1 class="mb-4">註冊新帳號</h1>
+                <div class="col-12 col-sm-6">
+                    <input type="text" name="userRealName" class="form-control border-0" placeholder="你的姓名" style="height: 55px;">
+                </div>
+                <div class="col-12 col-sm-6">
+                    <input type="email" name="email" class="form-control border-0" placeholder="你的 Email" style="height: 55px;">
+                </div>
+                <div class="col-12 col-sm-6">
+                    <input type="text" name="phoneNumber" class="form-control border-0" placeholder="你的手機" style="height: 55px;">
+                </div>
+                <div class="col-12 col-sm-6">
+                    <select name="bloodType" class="form-select border-0" style="height: 55px;">
+                        <option selected>你的血型</option>
+                        <option value="A">A型</option>
+                        <option value="B">B型</option>
+                        <option value="AB">AB型</option>
+                        <option value="O">O型</option>
+                        <option value="Rh+">Rh陽性</option>
+                        <option value="Rh-">Rh陰性</option>
+                        <option value="other">其他特殊血型系統(你的血型無法被常用血型系統描述)</option>
+                    </select>
+                </div>
+                <div class="col-12 col-sm-6">
+                    <div class="date" id="date" data-target-input="nearest">
+                        <input type="text" class="form-control border-0 datetimepicker-input" name="birthday"
+                            placeholder="你的生日" data-target="#date" data-toggle="datetimepicker" style="height: 55px;">
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6">
+                    <input type="text" name="username" class="form-control border-0" placeholder="使用者名稱" style="height: 55px;">
+                </div>
+                <div class="col-12 col-sm-6">
+                    <input type="password" name="password" class="form-control border-0" placeholder="請輸入密碼" style="height: 55px;">
+                </div>
+                <div class="col-12 col-sm-6">
+                    <input type="password" name="confirmPassword" class="form-control border-0" placeholder="再次確認密碼" style="height: 55px;">
+                </div>
+                <div class="col-12">
+                    <button class="btn btn-primary w-100 py-3" type="submit">註冊帳號</button>
+                    <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                </div>
+            </div>
+        </form>
+        </div>
+        </div>
+    </div>
 
 
 

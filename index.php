@@ -30,6 +30,7 @@
 
     <!-- Template Stylesheet -->
     <link href="css/style.css" rel="stylesheet">
+
 </head>
 
 <body>
@@ -68,7 +69,7 @@
 
     <!-- Navbar Start -->
     <nav class="navbar navbar-expand-lg bg-white navbar-light sticky-top p-0 wow fadeIn" data-wow-delay="0.1s">
-        <a href="index.html" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
+        <a href="index.php" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
             <h1 class="m-0 text-primary"><i class="far fa-hospital me-3"></i>丹尼斯的保鮮盒</h1>
         </a>
         <button type="button" class="navbar-toggler me-4" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
@@ -76,8 +77,8 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarCollapse">
             <div class="navbar-nav ms-auto p-4 p-lg-0">
-                <a href="index.html" class="nav-item nav-link active">首頁</a>
-                <a href="about.html" class="nav-item nav-link">關於我們</a>
+                <a href="index.php" class="nav-item nav-link active">首頁/關於</a>
+                <!-- <a href="aboutUs" class="nav-item nav-link">關於我們</a> -->
             </div>
             <a href="login.php" class="btn btn-primary rounded-0 py-4 px-lg-5 d-none d-lg-block">登入/註冊<i class="fa fa-arrow-right ms-3"></i></a>
         </div>
@@ -93,19 +94,19 @@
                 <div class="row g-4">
                     <div class="col-sm-4">
                         <div class="border-start border-light ps-4">
-                            <h2 class="text-white mb-1" data-toggle="counter-up">123</h2>
+                            <h2 class="text-white mb-1" data-toggle="counter-up">15</h2>
                             <p class="text-light mb-0">位主刀醫生</p>
                         </div>
                     </div>
                     <div class="col-sm-4">
                         <div class="border-start border-light ps-4">
-                            <h2 class="text-white mb-1" data-toggle="counter-up">1234</h2>
+                            <h2 class="text-white mb-1" data-toggle="counter-up">50</h2>
                             <p class="text-light mb-0">位醫療人員</p>
                         </div>
                     </div>
                     <div class="col-sm-4">
                         <div class="border-start border-light ps-4">
-                            <h2 class="text-white mb-1" data-toggle="counter-up">0</h2>
+                            <h2 class="text-white mb-1" data-toggle="counter-up">6990</h2>
                             <p class="text-light mb-0">病患人數</p>
                         </div>
                     </div>
@@ -157,7 +158,7 @@
                     <p><i class="far fa-check-circle text-primary me-3"></i>資深的外科醫生</p>
                     <p><i class="far fa-check-circle text-primary me-3"></i>醫療研究專家</p>
                     <p><i class="far fa-check-circle text-primary me-3"></i>截至目前，0負評</p>
-                    <a class="btn btn-primary rounded-pill py-3 px-5 mt-3" href="">立刻開始</a>
+                    <a class="btn btn-primary rounded-pill py-3 px-5 mt-3" href="login.php">立刻開始</a>
                 </div>
             </div>
         </div>

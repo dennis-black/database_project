@@ -30,32 +30,6 @@
 
     <!-- Template Stylesheet -->
     <link href="css/style.css" rel="stylesheet">
-    
-    <?php
-        session_start();
-        if ($_SERVER['REQUEST_METHOD'] === "POST"){
-            include "database_connection.php";
-            $username = $_POST['username']?? '';
-            $password = $_POST['password']?? '';
-
-            $stmt = $db->prepare("SELECT * FROM users WHERE username = :username");
-            $stmt->bindParam(':username', $username);
-            $stmt->execute();
-
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($user && password_verify($password, $user['password'])) {
-                $_SESSION['user_id'] = $user['ID']; 
-                $_SESSION['username'] = $user['username']; 
-        
-                header('Location: organs.php'); 
-                exit;
-            } else {
-                // 登入失敗以及錯誤訊息
-                echo "<script>alert('使用者名稱或密碼錯誤');</script>";
-            }
-        }
-    ?>
 </head>
 
 <body>
@@ -117,28 +91,8 @@
     </div>
     <!-- Header End -->
 
-    <div>
-    <div class="col-lg-6 wow fadeInUp" data-wow-delay="0.5s">
-    <div class="bg-light rounded h-100 d-flex align-items-center p-5">
-        <form action="login.php" method="post" autocomplete="off">
-            <h1 class="mb-4">使用者登入</h1>
-            <div class="row g-3">
-                <div class="col-12">
-                    <input name="username" class="form-control border-0" rows="5" placeholder="請輸入使用者名稱"></input>
-                </div>
-                <div class="col-12">
-                    <input type="password" name="password" class="form-control border-0" rows="5" placeholder="請輸入密碼"></input>
-                </div>
-                <div class="col-12">
-                    <button class="btn btn-primary w-100 py-3" type="submit">登入</button> 
-                    <a href="register.php" class="mb-4">沒有帳號號？註冊一個吧</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    <a href="forgotPassword.php" class="mb-4">忘記密碼？召回你的密碼吧</a>
-                </div>
-            </div>
-        </form>
-        </div>
-        </div>
-    </div>
+
+
 
     <!-- Footer Start -->
     <div class="container-fluid bg-dark text-light footer mt-5 pt-5 wow fadeIn" data-wow-delay="0.1s">
