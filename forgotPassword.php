@@ -30,6 +30,38 @@
 
     <!-- Template Stylesheet -->
     <link href="css/style.css" rel="stylesheet">
+    <?php
+        session_start();
+        if ($_SERVER['REQUEST_METHOD'] === "POST"){
+            include "database_connection.php";
+            $username = $_POST['username']?? '';
+            $phoneNumber = $_POST['phoneNumber']?? '';
+            $email = $_POST['email']?? '';
+
+            $stmt = $db->prepare("SELECT * FROM users WHERE username = :username");
+            $stmt->bindParam(':username', $username);
+            $stmt->execute();
+
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+
+
+            if(($user['email']==$email)&&($user['phoneNumber']==$phoneNumber)){
+                echo "<script>alert('驗證成功，新密碼被更改為手機號碼末三碼 + Email的“@”之前的部分');</script>";
+                $email = explode("@", $email);
+                $password = substr($phoneNumber, -3).$email[0];
+                // echo "<script>alert('新密碼:". $password ."');</script>";
+                $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+                $stmt = $db->prepare("UPDATE users SET password=:hashedpassword WHERE username=:username");
+                $stmt->bindParam(':hashedpassword', $hashedPassword);
+                $stmt->bindParam(':username', $username);
+                $stmt->execute();
+                
+            } else {
+                echo "<script>alert('驗證錯誤，請再試一次');</script>";
+            }
+        }
+    ?>
 </head>
 
 <body>
@@ -94,14 +126,20 @@
     <div>
     <div class="col-lg-6 wow fadeInUp" data-wow-delay="0.5s">
     <div class="bg-light rounded h-100 d-flex align-items-center p-5">
-        <form>
+        <form action="forgotPassword.php" method="post" autocomplete="off">
             <h1 class="mb-4">召喚的你的密碼</h1>
             <div class="row g-3">
                 <div class="col-12">
-                    <input class="form-control border-0" rows="5" placeholder="請輸入使用者名稱"></input>
+                    <input type="text" class="form-control border-0" name="username" rows="5" placeholder="請輸入使用者名稱"></input>
                 </div>
                 <div class="col-12">
-                    <input type="password" class="form-control border-0" rows="5" placeholder="請輸入你註冊時填入的電子郵箱"></input>
+                    <input type="text" class="form-control border-0" name="email" rows="5" placeholder="請輸入你註冊時填入的電子郵箱"></input>
+                </div>
+                <!-- <div class="col-12">
+                    <input type="password" class="form-control border-0" name="birthday" rows="5" placeholder="請輸入你的生日"></input>
+                </div> -->
+                <div class="col-12">
+                    <input type="password" class="form-control border-0" name="phoneNumber" rows="5" placeholder="請輸入你的電話號碼"></input>
                 </div>
                 <div class="col-12">
                     <button class="btn btn-primary w-100 py-3" type="submit">驗證</button> 
