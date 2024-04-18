@@ -47,6 +47,7 @@
             if ($user && password_verify($password, $user['password'])) {
                 $_SESSION['user_id'] = $user['ID']; 
                 $_SESSION['username'] = $user['username']; 
+                $_SESSION['userRealName'] = $user['userRealName']; 
         
                 header('Location: organs.php'); 
                 exit;

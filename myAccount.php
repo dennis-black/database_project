@@ -32,6 +32,40 @@
     <link href="css/style.css" rel="stylesheet">
     <?php
     session_start();
+
+    if (!isset($_SESSION['username'])) {
+        echo "<script>alert('偵測到未登入'); window.location.href = 'login.php';</script>";
+        exit(); 
+    }
+
+    include "database_connection.php";
+    
+    try {
+        $stmt = $db->prepare("SELECT * FROM users WHERE username = :username");
+        $stmt->bindParam(':username', $_SESSION['username']);
+        $stmt->execute();
+    
+        if ($stmt->rowCount() > 0) {
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            $role = $user['role'];
+            $userRealName = $user['userRealName'];
+            $email = $user['email'];
+            $phoneNumber = $user['phoneNumber'];
+            $bloodType = $user['bloodType'];
+            $birthday = $user['birthday'];
+            $username = $user['username'];
+
+            $birthdayParts = explode("/", $birthday);
+            $formattedBirthday = $birthdayParts[2] . "-" . $birthdayParts[0] . "-" . $birthdayParts[1];            
+        } else {
+            //echo "No user found with that username.";
+        }
+    } catch (PDOException $e) {
+        die("Database error: " . $e->getMessage());
+    }
+    // $password = $_POST['password'] ?? '';
+    // $confirmPassword = $_POST['confirmPassword'] ?? '';
+
     ?>
 </head>
 
@@ -68,7 +102,6 @@
     </div>
     <!-- Topbar End -->
 
-
     <!-- Navbar Start -->
     <nav class="navbar navbar-expand-lg bg-white navbar-light sticky-top p-0 wow fadeIn" data-wow-delay="0.1s">
         <a href="index.php" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
@@ -79,7 +112,7 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarCollapse">
             <div class="navbar-nav ms-auto p-4 p-lg-0">
-                <a href="myAccount.php" class="nav-item nav-link active"><?php echo "歡迎，". $_SESSION['userRealName'];?></a>
+                <a href="" class="nav-item nav-link active"><?php echo "歡迎，". $_SESSION['userRealName'];?></a>
                 <!-- <a href="aboutUs" class="nav-item nav-link">關於我們</a> -->
             </div>
             <a href="logout.php" class="btn btn-primary rounded-0 py-4 px-lg-5 d-none d-lg-block">登出<i class="fa fa-arrow-right ms-3"></i></a>
@@ -94,8 +127,55 @@
     </div>
     <!-- Header End -->
 
-
-
+    <div class="bg-light rounded h-100 d-flex align-items-center p-5">
+        <table>
+            <tr>
+                <th>身分組</th>
+                <td><input type="text" id="identityGroup" value="<?php echo $role;?>" readonly></td>
+                <td></td>
+            </tr>
+            <tr>
+                <th>使用者姓名</th>
+                <td><input type="text" id="userName" value="<?php echo $userRealName;?>" ></td>
+                <td><button onclick="updateValue('userName')">更改</button></td>
+            </tr>
+            <tr>
+                <th>Email</th>
+                <td><input type="email" id="email" value="<?php echo $email;?>" ></td>
+                <td><button onclick="updateValue('email')">更改</button></td>
+            </tr>
+            <tr>
+                <th>手機號碼</th>
+                <td><input type="tel" id="phoneNumber" value="<?php echo $phoneNumber;?>" ></td>
+                <td><button onclick="updateValue('phoneNumber')">更改</button></td>
+            </tr>
+            <tr>
+                <th>血型</th>
+                <td><input type="text" id="bloodType" value="<?php echo $bloodType;?>" ></td>
+                <td><button onclick="updateValue('bloodType')">更改</button></td>
+            </tr>
+            <tr>
+                <th>生日</th>
+                <td><input type="date" id="birthday" value="<?php echo $formattedBirthday;?>" ></td>
+                <!-- <td><input type="text" id="birthday" pattern="\d{1,2}/\d{1,2}/\d{4}" value="<?php echo $birthday;?>" ></td> -->
+                <td><button onclick="updateValue('birthday')">更改</button></td>
+            </tr>
+            <tr>
+                <th>使用者名稱</th>
+                <td><input type="text" id="username" value="<?php echo $username;?>" ></td>
+                <td><button onclick="updateValue('username')">更改</button></td>
+            </tr>
+            <tr>
+                <th>密碼</th>
+                <td><input type="password" id="password"></td>
+                <td rowspan="2" ><button onclick="updateValue('username')">更改</button></td>
+            </tr>
+            <tr>
+                <th>再次確認密碼</th>
+                <td><input type="password" id="password"></td>
+            </tr>
+        </table>
+    </div>
 
     <!-- Footer Start -->
     <div class="container-fluid bg-dark text-light footer mt-5 pt-5 wow fadeIn" data-wow-delay="0.1s">
