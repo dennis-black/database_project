@@ -48,8 +48,14 @@
                 $_SESSION['user_id'] = $user['ID']; 
                 $_SESSION['username'] = $user['username']; 
                 $_SESSION['userRealName'] = $user['userRealName']; 
-        
-                header('Location: organs.php'); 
+                $_SESSION['role'] = $user['role'];
+
+                if($_SESSION['role'] == "admin"){
+                    header('Location: manageAccounts.php');
+                } else {
+                    header('Location: organs.php'); 
+                }
+            
                 exit;
             } else {
                 // 登入失敗以及錯誤訊息

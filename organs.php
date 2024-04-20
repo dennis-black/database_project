@@ -32,6 +32,11 @@
     <link href="css/style.css" rel="stylesheet">
     <?php
     session_start();
+
+    if (!isset($_SESSION['username'])) {
+        echo "<script>alert('偵測到未登入'); window.location.href = 'login.php';</script>";
+        exit(); 
+    }
     ?>
 </head>
 
@@ -71,8 +76,8 @@
 
     <!-- Navbar Start -->
     <nav class="navbar navbar-expand-lg bg-white navbar-light sticky-top p-0 wow fadeIn" data-wow-delay="0.1s">
-        <a href="index.php" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
-            <h1 class="m-0 text-primary"><i class="far fa-hospital me-3"></i>丹尼斯的保鮮盒</h1>
+        <a href="organs.php" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
+            <h1 class="m-0 text-primary"><i class="far fa-hospital me-3"></i>丹尼斯的保鮮盒(商品列表製作中)</h1>
         </a>
         <button type="button" class="navbar-toggler me-4" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
             <span class="navbar-toggler-icon"></span>

@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>丹尼斯的保鮮盒</title>
+    <title>丹尼斯的保鮮盒-管理員介面</title>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <meta content="" name="keywords">
     <meta content="" name="description">
@@ -32,36 +32,83 @@
     <link href="css/style.css" rel="stylesheet">
     <?php
         session_start();
-        if ($_SERVER['REQUEST_METHOD'] === "POST"){
+
+        // 處理越權查看以及錯誤登入
+        if (!isset($_SESSION['username'])) {
+            echo "<script>alert('偵測到未登入'); window.location.href = 'login.php';</script>";
+            exit();
+        } else if ($_SESSION['role'] != "admin") {
+            echo "<script>alert('無權訪問'); window.location.href = 'logout.php';</script>";
+            exit();
+        }
+        
+        // 處理管理員調出使用者清單
+        include "database_connection.php";
+        $stmt = $db->prepare("SELECT * FROM `users`");
+        $stmt->execute();
+        
+        $html = "<table><tr><th>ID</th><th>身分組</th><th>使用者姓名</th><th>使用者名稱</th><th>血型</th><th>生日</th></tr>";
+        while ($user = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $html .= "<tr>";
+            $html .= "<td>" . htmlspecialchars($user['ID']) . "</td>";
+            $html .= "<td>" . htmlspecialchars($user['role']) . "</td>";
+            $html .= "<td>" . htmlspecialchars($user['userRealName']) . "</td>";
+            $html .= "<td>" . htmlspecialchars($user['username']) . "</td>";
+            $html .= "<td>" . htmlspecialchars($user['bloodType']) . "</td>";
+            $html .= "<td>" . htmlspecialchars($user['birthday']) . "</td>";
+
+            $html .= "<td><form action=\"manageAccounts.php\" method=\"post\" onsubmit=\"return confirmDelete();\"><input type=\"hidden\" name=\"deleteID\" value=\"".$user['ID']."\"><button type=\"submit\" value=\"deleteUser\" style=\"background-color: #ff4d4d; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; transition: background 0.3s ease;\">刪除使用者</button>"
+            ."</td>";
+            $html .= "</tr>";
+        }
+        $html .= "</table>";
+    ?>
+    <?php
+        if (($_SERVER['REQUEST_METHOD'] === "POST")&&(isset($_POST['deleteID']))){
             include "database_connection.php";
-            $username = $_POST['username']?? '';
-            $phoneNumber = $_POST['phoneNumber']?? '';
-            $email = $_POST['email']?? '';
-
-            $stmt = $db->prepare("SELECT * FROM users WHERE username = :username");
-            $stmt->bindParam(':username', $username);
+            $deleteUserID = $_POST['deleteID'];
+            $stmt = $db -> prepare("DELETE FROM `users` WHERE ID = :deleteID");
+            $stmt->bindParam(':deleteID', $deleteUserID);
             $stmt->execute();
-
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-
-
-            if(($user['email']==$email)&&($user['phoneNumber']==$phoneNumber)){
-                echo "<script>alert('驗證成功，新密碼被更改為手機號碼末三碼 + Email的“@”之前的部分');window.location.href = 'login.php';</script>";
-                $email = explode("@", $email);
-                $password = substr($phoneNumber, -3).$email[0];
-                // echo "<script>alert('新密碼:". $password ."');</script>";
-                $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-                $stmt = $db->prepare("UPDATE users SET password=:hashedpassword WHERE username=:username");
-                $stmt->bindParam(':hashedpassword', $hashedPassword);
-                $stmt->bindParam(':username', $username);
-                $stmt->execute();
-                
-            } else {
-                echo "<script>alert('驗證錯誤，請再試一次');</script>";
-            }
+            header("location: manageAccounts.php");
         }
     ?>
+    <style>
+        table {
+            width: 100%;        /* 表格寬度佔滿父元素 */
+            border-collapse: collapse; /* 邊框合併為單一邊框 */
+            margin: 20px 0;     /* 上下邊距為 20px，左右為 0 */
+            font-family: Arial, sans-serif; /* 使用 Arial 或無襯線字體 */
+            color: #333;        /* 字體顏色 */
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1); /* 輕微陰影效果 */
+            background-color: #ffffff; /* 白色背景 */
+        }
+
+        /* 表格標頭 */
+        th {
+            background-color: #f2f2f2; /* 標頭背景顏色 */
+            color: #333;        /* 標頭文字顏色 */
+            font-weight: bold;  /* 粗體文字 */
+            padding: 12px 15px; /* 內距 */
+            text-align: left;   /* 文字對齊 */
+        }
+
+        /* 表格行與單元格 */
+        tr {
+            border-bottom: 1px solid #ddd; /* 行底部邊框 */
+        }
+
+        td {
+            padding: 12px 15px; /* 單元格內距 */
+            text-align: left;   /* 文字對齊 */
+        }
+
+        /* 滑過行變色效果 */
+        tr:hover {
+            background-color: #f5f5f5; /* 滑過時的背景顏色 */
+        }
+
+    </style>
 </head>
 
 <body>
@@ -100,7 +147,7 @@
 
     <!-- Navbar Start -->
     <nav class="navbar navbar-expand-lg bg-white navbar-light sticky-top p-0 wow fadeIn" data-wow-delay="0.1s">
-        <a href="index.php" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
+        <a href="organs.php" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
             <h1 class="m-0 text-primary"><i class="far fa-hospital me-3"></i>丹尼斯的保鮮盒</h1>
         </a>
         <button type="button" class="navbar-toggler me-4" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
@@ -108,10 +155,10 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarCollapse">
             <div class="navbar-nav ms-auto p-4 p-lg-0">
-                <a href="index.php" class="nav-item nav-link active">首頁/關於</a>
+                <a href="myAccount.php" class="nav-item nav-link active"><?php echo "歡迎，". $_SESSION['userRealName'];?></a>
                 <!-- <a href="aboutUs" class="nav-item nav-link">關於我們</a> -->
             </div>
-            <a href="login.php" class="btn btn-primary rounded-0 py-4 px-lg-5 d-none d-lg-block">登入/註冊<i class="fa fa-arrow-right ms-3"></i></a>
+            <a href="logout.php" class="btn btn-primary rounded-0 py-4 px-lg-5 d-none d-lg-block">登出<i class="fa fa-arrow-right ms-3"></i></a>
         </div>
     </nav>
     <!-- Navbar End -->
@@ -123,33 +170,10 @@
     </div>
     <!-- Header End -->
 
-    <div>
-    <div class="col-lg-6 wow fadeInUp" data-wow-delay="0.5s">
-    <div class="bg-light rounded h-100 d-flex align-items-center p-5">
-        <form action="forgotPassword.php" method="post" autocomplete="off">
-            <h1 class="mb-4">召喚的你的密碼</h1>
-            <div class="row g-3">
-                <div class="col-12">
-                    <input type="text" class="form-control border-0" name="username" rows="5" placeholder="請輸入使用者名稱"></input>
-                </div>
-                <div class="col-12">
-                    <input type="text" class="form-control border-0" name="email" rows="5" placeholder="請輸入你註冊時填入的電子郵箱"></input>
-                </div>
-                <!-- <div class="col-12">
-                    <input type="password" class="form-control border-0" name="birthday" rows="5" placeholder="請輸入你的生日"></input>
-                </div> -->
-                <div class="col-12">
-                    <input type="password" class="form-control border-0" name="phoneNumber" rows="5" placeholder="請輸入你的電話號碼"></input>
-                </div>
-                <div class="col-12">
-                    <button class="btn btn-primary w-100 py-3" type="submit">驗證</button> 
-                    <p class="mb-4">若遇到任何問題，請聯絡網站管理員</p>
-                </div>
-            </div>
-        </form>
-        </div>
-        </div>
-    </div>
+    <div class="bg-light rounded h-100 d-flex align-items-center p-5"><?php echo $html;?></div>
+
+
+
 
     <!-- Footer Start -->
     <div class="container-fluid bg-dark text-light footer mt-5 pt-5 wow fadeIn" data-wow-delay="0.1s">
@@ -197,6 +221,11 @@
 
     <!-- Template Javascript -->
     <script src="js/main.js"></script>
+    <script>
+        function confirmDelete() {
+            return confirm('操作不可逆，請再次確認是否要執行');
+        }
+    </script>
 </body>
 
 </html>

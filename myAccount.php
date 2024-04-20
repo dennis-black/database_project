@@ -55,16 +55,51 @@
             $birthday = $user['birthday'];
             $username = $user['username'];
 
-            $birthdayParts = explode("/", $birthday);
-            $formattedBirthday = $birthdayParts[2] . "-" . $birthdayParts[0] . "-" . $birthdayParts[1];            
+            if($_SESSION['role'] != "user"){ //非一般權限使用者不處理生日格式字串
+                $formattedBirthday = $birthday;
+            } else {
+                $birthdayParts = explode("/", $birthday);
+                $formattedBirthday = $birthdayParts[2] . "-" . $birthdayParts[0] . "-" . $birthdayParts[1];
+            }
+
         } else {
             //echo "No user found with that username.";
         }
     } catch (PDOException $e) {
         die("Database error: " . $e->getMessage());
     }
-    // $password = $_POST['password'] ?? '';
-    // $confirmPassword = $_POST['confirmPassword'] ?? '';
+    ?>
+    <?php
+    if (($_SERVER['REQUEST_METHOD'] === "POST")&&(isset($_POST['update']))){ //update stands for the field name
+        include "database_connection.php";
+        $fieldToUpdate = $_POST['update'];
+        $updateValue = $_POST[$fieldToUpdate]?? '';
+        // echo "<script>alert('".$fieldToUpdate.$updateValue."');</script>";
+
+        if ($fieldToUpdate === 'password') { //處理更改密碼需要加密的部分
+            if (($_POST['password'] === $_POST['confirmPassword']) && (strlen($_POST['password']) >= 4 && strlen($_POST['password']) <= 50)) {
+                $updateValue = password_hash($_POST['password'], PASSWORD_DEFAULT);
+            } else {
+                echo "<script>alert('密碼與確認密碼不相同或是密碼長度低於4個字元或高於50個字元'); window.history.back();</script>";
+                exit();
+            }
+        }
+
+        try { //更新資料庫
+            $stmt = $db->prepare("UPDATE users SET `$fieldToUpdate` = :updateValue WHERE id = :id");
+            $stmt->bindParam(':updateValue', $updateValue);
+            $stmt->bindParam(':id', $_SESSION['user_id']);
+            $stmt->execute();
+    
+            if ($stmt->rowCount() > 0) {
+                echo "<script>alert('更新成功'); window.location.href = 'myAccount.php';</script>";
+            } else {
+                echo "<script>alert('無變更導致的未更新'); window.history.back();</script>";
+            }
+        } catch (PDOException $e) {
+            die("Database error during update: " . $e->getMessage());
+        }
+    }
 
     ?>
 </head>
@@ -104,8 +139,8 @@
 
     <!-- Navbar Start -->
     <nav class="navbar navbar-expand-lg bg-white navbar-light sticky-top p-0 wow fadeIn" data-wow-delay="0.1s">
-        <a href="index.php" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
-            <h1 class="m-0 text-primary"><i class="far fa-hospital me-3"></i>丹尼斯的保鮮盒</h1>
+        <a href="organs.php" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
+            <h1 class="m-0 text-primary"><i class="far fa-hospital me-3"></i>丹尼斯的保鮮盒(前端製作中)</h1>
         </a>
         <button type="button" class="navbar-toggler me-4" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
             <span class="navbar-toggler-icon"></span>
@@ -131,49 +166,70 @@
         <table>
             <tr>
                 <th>身分組</th>
-                <td><input type="text" id="identityGroup" value="<?php echo $role;?>" readonly></td>
+                <td><input type="text" class="form-control border-0" value="<?php echo $role;?>" readonly></td>
                 <td></td>
             </tr>
             <tr>
-                <th>使用者姓名</th>
-                <td><input type="text" id="userName" value="<?php echo $userRealName;?>" ></td>
-                <td><button onclick="updateValue('userName')">更改</button></td>
+                <form action="myAccount.php" method="post" autocomplete="off">
+                    <th>使用者姓名</th>
+                    <td><input type="text" name="userRealName" class="form-control border-0" value="<?php echo $userRealName;?>" ></td>
+                    <td><button type="submit" name="update" value="userRealName">更改姓名</button></td>
+                </form>
             </tr>
             <tr>
-                <th>Email</th>
-                <td><input type="email" id="email" value="<?php echo $email;?>" ></td>
-                <td><button onclick="updateValue('email')">更改</button></td>
+                <form action="myAccount.php" method="post" autocomplete="off">
+                    <th>Email</th>
+                    <td><input type="email" name="email"  class="form-control border-0" value="<?php echo $email;?>" ></td>
+                    <td><button type="submit" name="update" value="email">更改Email</button></td>
+                </form>
             </tr>
             <tr>
-                <th>手機號碼</th>
-                <td><input type="tel" id="phoneNumber" value="<?php echo $phoneNumber;?>" ></td>
-                <td><button onclick="updateValue('phoneNumber')">更改</button></td>
+                <form action="myAccount.php" method="post" autocomplete="off">
+                    <th>手機號碼</th>
+                    <td><input type="tel" name="phoneNumber" class="form-control border-0" value="<?php echo $phoneNumber;?>" ></td>
+                    <td><button type="submit" name="update" value="phoneNumber">更改手機號碼</button></td>
+                </form>
             </tr>
             <tr>
-                <th>血型</th>
-                <td><input type="text" id="bloodType" value="<?php echo $bloodType;?>" ></td>
-                <td><button onclick="updateValue('bloodType')">更改</button></td>
+                <form action="myAccount.php" method="post" autocomplete="off">
+                    <th>血型</th>
+                    <td> 
+                        <select name="bloodType" class="form-control border-0" >
+                            <option value="A" <?php if($bloodType=="A") echo "selected"?>>A型</option>
+                            <option value="B" <?php if($bloodType=="B") echo "selected"?>>B型</option>
+                            <option value="AB" <?php if($bloodType=="AB") echo "selected"?>>AB型</option>
+                            <option value="O" <?php if($bloodType=="O") echo "selected"?>>O型</option>
+                            <option value="Rh+" <?php if($bloodType=="Rh+") echo "selected"?>>Rh陽性</option>
+                            <option value="Rh-" <?php if($bloodType=="Rh-") echo "selected"?>>Rh陰性</option>
+                            <option value="other" <?php if($bloodType=="other") echo "selected"?>>其他特殊血型系統(你的血型無法被常用血型系統描述)</option>
+                        </select>
+                    </td>
+                    <td><button type="submit" name="update" value="bloodType">更改血型</button></td>
+                </form>
             </tr>
             <tr>
                 <th>生日</th>
-                <td><input type="date" id="birthday" value="<?php echo $formattedBirthday;?>" ></td>
-                <!-- <td><input type="text" id="birthday" pattern="\d{1,2}/\d{1,2}/\d{4}" value="<?php echo $birthday;?>" ></td> -->
-                <td><button onclick="updateValue('birthday')">更改</button></td>
+                <td><input type="date" name="birthday" class="form-control border-0" value="<?php echo $formattedBirthday;?>" readonly></td>
+                <td><button disabled>更改生日</button></td>
             </tr>
             <tr>
-                <th>使用者名稱</th>
-                <td><input type="text" id="username" value="<?php echo $username;?>" ></td>
-                <td><button onclick="updateValue('username')">更改</button></td>
+                <form action="myAccount.php" method="post" autocomplete="off">
+                    <th>使用者名稱</th>
+                    <td><input type="text" name="username" class="form-control border-0" value="<?php echo $username;?>" ></td>
+                    <td><button type="submit" name="update" value="username">更改</button></td>
+                </form>
             </tr>
+            <form action="myAccount.php" method="post" autocomplete="off">
             <tr>
                 <th>密碼</th>
-                <td><input type="password" id="password"></td>
-                <td rowspan="2" ><button onclick="updateValue('username')">更改</button></td>
+                <td><input type="password" name="password" class="form-control border-0"></td>
+                <td rowspan="2" ><button type="submit" name="update" value="password">更改</button></td>
             </tr>
             <tr>
                 <th>再次確認密碼</th>
-                <td><input type="password" id="password"></td>
+                <td><input type="password" name="confirmPassword" class="form-control border-0"></td>
             </tr>
+            </form>
         </table>
     </div>
 
