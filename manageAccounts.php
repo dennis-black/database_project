@@ -57,8 +57,7 @@
             $html .= "<td>" . htmlspecialchars($user['bloodType']) . "</td>";
             $html .= "<td>" . htmlspecialchars($user['birthday']) . "</td>";
 
-            $html .= "<td><form action=\"manageAccounts.php\" method=\"post\" onsubmit=\"return confirmDelete();\"><input type=\"hidden\" name=\"deleteID\" value=\"".$user['ID']."\"><button type=\"submit\" value=\"deleteUser\" style=\"background-color: #ff4d4d; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; transition: background 0.3s ease;\">刪除使用者</button>"
-            ."</td>";
+            $html .= "<td><form action=\"manageAccounts.php\" method=\"post\" onsubmit=\"return confirmDelete();\"><input type=\"hidden\" name=\"deleteID\" value=\"".$user['ID']."\"><button type=\"submit\" style=\"background-color: #ff4d4d; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; transition: background 0.3s ease;\">刪除使用者</button></form></td>";
             $html .= "</tr>";
         }
         $html .= "</table>";
