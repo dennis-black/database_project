@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主機： localhost:3306
--- 產生時間： 2024 年 04 月 20 日 16:39
+-- 產生時間： 2024 年 04 月 20 日 16:58
 -- 伺服器版本： 10.6.16-MariaDB-0ubuntu0.22.04.1
 -- PHP 版本： 8.1.2-1ubuntu2.14
 
@@ -51,7 +51,8 @@ INSERT INTO `users` (`ID`, `role`, `userRealName`, `email`, `phoneNumber`, `bloo
 (15, 'user', '測試使用者3', 'test3@crisperbox', '1234567890', 'other', '04/20/2024', 'test3', '$2y$10$nw92naXu2khE9tu3nXYhs.Hrqgo4kLCPzXSek30YAbae9CNjT0Kie'),
 (16, 'user', '測試使用者4', 'test4@c', '1234567890', 'B', '04/02/2024', 'test4', '$2y$10$wfyrHf70Dc0qjilhbXwbd.le91MsoELE9pF9b/V46qNziPp5JzK.u'),
 (17, 'user', '測試使用者5', 'test5@c', '0987654321', 'Rh+', '04/02/2024', 'test5', '$2y$10$fs.u13U13PdHlLOFs43NteB1vxoooTViB.4feHKfp1qhlw0NgiA4.'),
-(18, 'user', '測試使用者6', 'test6@c', '6789054321', 'O', '04/29/2024', 'test6', '$2y$10$zV11DoRIlfqYjs0xHs0JQejPYCyJXiWYV9YpCk9kRf4UiCH0kFmbO');
+(18, 'user', '測試使用者6', 'test6@c', '6789054321', 'O', '04/29/2024', 'test6', '$2y$10$zV11DoRIlfqYjs0xHs0JQejPYCyJXiWYV9YpCk9kRf4UiCH0kFmbO'),
+(19, 'user', '測試帳號7', 'test7@c', '6057483902', 'other', '03/31/2024', 'test7', '$2y$10$6pGMbxuVlm4R0PUNp.5Su.kJ.Hr12/u7U8neoZIAyWHdlgxIwWbaG');
 
 --
 -- 已傾印資料表的索引
@@ -71,7 +72,7 @@ ALTER TABLE `users`
 -- 使用資料表自動遞增(AUTO_INCREMENT) `users`
 --
 ALTER TABLE `users`
-  MODIFY `ID` int(5) NOT NULL AUTO_INCREMENT COMMENT 'ID', AUTO_INCREMENT=19;
+  MODIFY `ID` int(5) NOT NULL AUTO_INCREMENT COMMENT 'ID', AUTO_INCREMENT=20;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
