@@ -93,6 +93,7 @@
     
             if ($stmt->rowCount() > 0) {
                 echo "<script>alert('更新成功'); window.location.href = 'myAccount.php';</script>";
+                if($fieldToUpdate == "userRealName") $_SESSION['userRealName'] = $updateValue; 
             } else {
                 echo "<script>alert('無變更導致的未更新'); window.history.back();</script>";
             }
