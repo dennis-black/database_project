@@ -1,6 +1,3 @@
-<?php
-    session_start();
-?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -34,74 +31,77 @@
     <!-- Template Stylesheet -->
     <link href="css/style.css" rel="stylesheet">
     <?php
-        if (!isset($_SESSION['username'])) {
-            echo "<script>alert('偵測到未登入'); window.location.href = 'login.php';</script>";
-            exit(); 
-        }
+    session_start();
 
-        include "database_connection.php";
-        
-        try {
-            $stmt = $db->prepare("SELECT * FROM users WHERE username = :username");
-            $stmt->bindParam(':username', $_SESSION['username']);
-            $stmt->execute();
-        
-            if ($stmt->rowCount() > 0) {
-                $user = $stmt->fetch(PDO::FETCH_ASSOC);
-                $role = $user['role'];
-                $userRealName = $user['userRealName'];
-                $email = $user['email'];
-                $phoneNumber = $user['phoneNumber'];
-                $bloodType = $user['bloodType'];
-                $birthday = $user['birthday'];
-                $username = $user['username'];
+    if (!isset($_SESSION['username'])) {
+        echo "<script>alert('偵測到未登入'); window.location.href = 'login.php';</script>";
+        exit(); 
+    }
 
-                if($_SESSION['role'] != "user"){ //非一般權限使用者不處理生日格式字串
-                    $formattedBirthday = $birthday;
-                } else {
-                    $birthdayParts = explode("/", $birthday);
-                    $formattedBirthday = $birthdayParts[2] . "-" . $birthdayParts[0] . "-" . $birthdayParts[1];
-                }
+    include "database_connection.php";
+    
+    try {
+        $stmt = $db->prepare("SELECT * FROM users WHERE username = :username");
+        $stmt->bindParam(':username', $_SESSION['username']);
+        $stmt->execute();
+    
+        if ($stmt->rowCount() > 0) {
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            $role = $user['role'];
+            $userRealName = $user['userRealName'];
+            $email = $user['email'];
+            $phoneNumber = $user['phoneNumber'];
+            $bloodType = $user['bloodType'];
+            $birthday = $user['birthday'];
+            $username = $user['username'];
 
+            if($_SESSION['role'] != "user"){ //非一般權限使用者不處理生日格式字串
+                $formattedBirthday = $birthday;
             } else {
-                //echo "No user found with that username.";
+                $birthdayParts = explode("/", $birthday);
+                $formattedBirthday = $birthdayParts[2] . "-" . $birthdayParts[0] . "-" . $birthdayParts[1];
             }
-        } catch (PDOException $e) {
-            die("Database error: " . $e->getMessage());
+
+        } else {
+            //echo "No user found with that username.";
         }
+    } catch (PDOException $e) {
+        die("Database error: " . $e->getMessage());
+    }
     ?>
     <?php
-        if (($_SERVER['REQUEST_METHOD'] === "POST")&&(isset($_POST['update']))){ //update stands for the field name
-            include "database_connection.php";
-            $fieldToUpdate = $_POST['update'];
-            $updateValue = $_POST[$fieldToUpdate]?? '';
-            // echo "<script>alert('".$fieldToUpdate.$updateValue."');</script>";
+    if (($_SERVER['REQUEST_METHOD'] === "POST")&&(isset($_POST['update']))){ //update stands for the field name
+        include "database_connection.php";
+        $fieldToUpdate = $_POST['update'];
+        $updateValue = $_POST[$fieldToUpdate]?? '';
+        // echo "<script>alert('".$fieldToUpdate.$updateValue."');</script>";
 
-            if ($fieldToUpdate === 'password') { //處理更改密碼需要加密的部分
-                if (($_POST['password'] === $_POST['confirmPassword']) && (strlen($_POST['password']) >= 4 && strlen($_POST['password']) <= 50)) {
-                    $updateValue = password_hash($_POST['password'], PASSWORD_DEFAULT);
-                } else {
-                    echo "<script>alert('密碼與確認密碼不相同或是密碼長度低於4個字元或高於50個字元'); window.history.back();</script>";
-                    exit();
-                }
-            }
-
-            try { //更新資料庫
-                $stmt = $db->prepare("UPDATE users SET `$fieldToUpdate` = :updateValue WHERE id = :id");
-                $stmt->bindParam(':updateValue', $updateValue);
-                $stmt->bindParam(':id', $_SESSION['user_id']);
-                $stmt->execute();
-        
-                if ($stmt->rowCount() > 0) {
-                    echo "<script>alert('更新成功'); window.location.href = 'myAccount.php';</script>";
-                    if($fieldToUpdate == "userRealName") $_SESSION['userRealName'] = $updateValue; 
-                } else {
-                    echo "<script>alert('無變更導致的未更新'); window.history.back();</script>";
-                }
-            } catch (PDOException $e) {
-                die("Database error during update: " . $e->getMessage());
+        if ($fieldToUpdate === 'password') { //處理更改密碼需要加密的部分
+            if (($_POST['password'] === $_POST['confirmPassword']) && (strlen($_POST['password']) >= 4 && strlen($_POST['password']) <= 50)) {
+                $updateValue = password_hash($_POST['password'], PASSWORD_DEFAULT);
+            } else {
+                echo "<script>alert('密碼與確認密碼不相同或是密碼長度低於4個字元或高於50個字元'); window.history.back();</script>";
+                exit();
             }
         }
+
+        try { //更新資料庫
+            $stmt = $db->prepare("UPDATE users SET `$fieldToUpdate` = :updateValue WHERE id = :id");
+            $stmt->bindParam(':updateValue', $updateValue);
+            $stmt->bindParam(':id', $_SESSION['user_id']);
+            $stmt->execute();
+    
+            if ($stmt->rowCount() > 0) {
+                echo "<script>alert('更新成功'); window.location.href = 'myAccount.php';</script>";
+                if($fieldToUpdate == "userRealName") $_SESSION['userRealName'] = $updateValue; 
+            } else {
+                echo "<script>alert('無變更導致的未更新'); window.history.back();</script>";
+            }
+        } catch (PDOException $e) {
+            die("Database error during update: " . $e->getMessage());
+        }
+    }
+
     ?>
 </head>
 
@@ -141,17 +141,14 @@
     <!-- Navbar Start -->
     <nav class="navbar navbar-expand-lg bg-white navbar-light sticky-top p-0 wow fadeIn" data-wow-delay="0.1s">
         <a href="organs.php" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
-            <h1 class="m-0 text-primary"><i class="far fa-hospital me-3"></i>丹尼斯的保鮮盒</h1>
+            <h1 class="m-0 text-primary"><i class="far fa-hospital me-3"></i>丹尼斯的保鮮盒(前端製作中)</h1>
         </a>
         <button type="button" class="navbar-toggler me-4" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarCollapse">
             <div class="navbar-nav ms-auto p-4 p-lg-0">
-                <a href="organs.php" class="nav-item nav-link active">前往賣場</a>
-                <a href="listOrgans.php" class="nav-item nav-link active">我的上架列表</a>
-                <a href="cart.php" class="nav-item nav-link active">我的購物車</a>
-                <a href="myAccount.php" class="nav-item nav-link active"><?php echo "歡迎，". $_SESSION['userRealName'];?></a>
+                <a href="" class="nav-item nav-link active"><?php echo "歡迎，". $_SESSION['userRealName'];?></a>
                 <!-- <a href="aboutUs" class="nav-item nav-link">關於我們</a> -->
             </div>
             <a href="logout.php" class="btn btn-primary rounded-0 py-4 px-lg-5 d-none d-lg-block">登出<i class="fa fa-arrow-right ms-3"></i></a>
@@ -217,9 +214,11 @@
                 <td><button disabled>更改生日</button></td>
             </tr>
             <tr>
+                <form action="myAccount.php" method="post" autocomplete="off">
                     <th>使用者名稱</th>
-                    <td><input type="text" name="username" class="form-control border-0" value="<?php echo $username;?>" readonly></td>
-                    <td><button name="update" value="username" disabled>更改</button></td>
+                    <td><input type="text" name="username" class="form-control border-0" value="<?php echo $username;?>" ></td>
+                    <td><button type="submit" name="update" value="username">更改</button></td>
+                </form>
             </tr>
             <form action="myAccount.php" method="post" autocomplete="off">
             <tr>

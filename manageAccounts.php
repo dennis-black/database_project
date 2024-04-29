@@ -1,3 +1,6 @@
+<?php
+    session_start();
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -31,8 +34,6 @@
     <!-- Template Stylesheet -->
     <link href="css/style.css" rel="stylesheet">
     <?php
-        session_start();
-
         // 處理越權查看以及錯誤登入
         if (!isset($_SESSION['username'])) {
             echo "<script>alert('偵測到未登入'); window.location.href = 'login.php';</script>";
@@ -44,22 +45,46 @@
         
         // 處理管理員調出使用者清單
         include "database_connection.php";
-        $stmt = $db->prepare("SELECT * FROM `users`");
-        $stmt->execute();
+        // $stmt = $db->prepare("SELECT * FROM `users`");
+        // $stmt->execute();
         
-        $html = "<table><tr><th>ID</th><th>身分組</th><th>使用者姓名</th><th>使用者名稱</th><th>血型</th><th>生日</th></tr>";
-        while ($user = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $html .= "<tr>";
-            $html .= "<td>" . htmlspecialchars($user['ID']) . "</td>";
-            $html .= "<td>" . htmlspecialchars($user['role']) . "</td>";
-            $html .= "<td>" . htmlspecialchars($user['userRealName']) . "</td>";
-            $html .= "<td>" . htmlspecialchars($user['username']) . "</td>";
-            $html .= "<td>" . htmlspecialchars($user['bloodType']) . "</td>";
-            $html .= "<td>" . htmlspecialchars($user['birthday']) . "</td>";
-            $html .= "<td><form action=\"manageAccounts.php\" method=\"post\" onsubmit=\"return confirmDelete();\">". ((($user['role'] === "admin")||($user['role'] === "root")) ? "" : "<input type=\"hidden\" name=\"deleteID\" value=\"".$user['ID']."\"><button type=\"submit\" style=\"background-color: #ff4d4d; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; transition: background 0.3s ease;\">刪除使用者</button></form></td>");
-            $html .= "</tr>";
+        // $html = "<table><tr><th>ID</th><th>身分組</th><th>使用者姓名</th><th>使用者名稱</th><th>血型</th><th>生日</th><th>電話</th><th>電子郵件</th></tr>";
+        // while ($user = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        //     $html .= "<tr>";
+        //     $html .= "<td>" . htmlspecialchars($user['ID']) . "</td>";
+        //     $html .= "<td>" . htmlspecialchars($user['role']) . "</td>";
+        //     $html .= "<td>" . htmlspecialchars($user['userRealName']) . "</td>";
+        //     $html .= "<td>" . htmlspecialchars($user['username']) . "</td>";
+        //     $html .= "<td>" . htmlspecialchars($user['bloodType']) . "</td>";
+        //     $html .= "<td>" . htmlspecialchars($user['birthday']) . "</td>";
+        //     $html .= "<td>" . htmlspecialchars($user['phoneNumber']) . "</td>";
+        //     $html .= "<td>" . htmlspecialchars($user['email']) . "</td>";
+            // $html .= "<td><form action=\"manageAccounts.php\" method=\"post\" onsubmit=\"return confirmDelete();\">". ((($user['role'] === "admin")||($user['role'] === "root")) ? "" : "<input type=\"hidden\" name=\"deleteID\" value=\"".$user['ID']."\"><button type=\"submit\" style=\"background-color: #ff4d4d; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; transition: background 0.3s ease;\">刪除使用者</button></form></td>");
+        //     $html .= "</tr>";
+        // }
+        // $html .= "</table>";
+        $records_per_page = 10;
+
+        $stmt = $db->prepare("SELECT COUNT(*) FROM `users`");
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_NUM);
+        $total_records = $row[0];
+
+        $total_pages = ceil($total_records / $records_per_page);
+
+        if (isset($_GET["page"]) && is_numeric($_GET["page"])) {
+            $current_page = (int) $_GET["page"];
+        } else {
+            $current_page = 1;
         }
-        $html .= "</table>";
+
+        $start_from = ($current_page - 1) * $records_per_page;
+
+        $stmt = $db->prepare("SELECT * FROM `users` LIMIT :start_from, :records_per_page");
+        $stmt->bindParam(':start_from', $start_from, PDO::PARAM_INT);
+        $stmt->bindParam(':records_per_page', $records_per_page, PDO::PARAM_INT);
+        $stmt->execute();
+
     ?>
     <?php
         if (($_SERVER['REQUEST_METHOD'] === "POST")&&(isset($_POST['deleteID']))){
@@ -168,7 +193,41 @@
     </div>
     <!-- Header End -->
 
-    <div class="bg-light rounded h-100 d-flex align-items-center p-5"><?php echo $html;?></div>
+    <div class="bg-light rounded h-100 d-flex align-items-center p-5">
+        <?php
+            echo "<table>";
+            echo "<tr><th>ID</th><th>身分組</th><th>使用者姓名</th><th>使用者名稱</th><th>血型</th><th>生日</th><th>電話</th><th>電子郵件</th></tr>";
+            while ($user = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                echo "<tr><td>" . htmlspecialchars($user['ID']) . "</td><td>" . htmlspecialchars($user['role']) . "</td><td>" . htmlspecialchars($user['userRealName']) . "</td><td>" . htmlspecialchars($user['username']) . "</td><td>" . htmlspecialchars($user['bloodType']) . "</td><td>" . htmlspecialchars($user['birthday']) . "</td><td>" . htmlspecialchars($user['phoneNumber']) . "</td><td>" . htmlspecialchars($user['email']) . "</td>";
+                echo "<td><form action=\"manageAccounts.php\" method=\"post\" onsubmit=\"return confirmDelete();\">". ((($user['role'] === "admin")||($user['role'] === "root")) ? "" : "<input type=\"hidden\" name=\"deleteID\" value=\"".$user['ID']."\"><button type=\"submit\" style=\"background-color: #ff4d4d; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; transition: background 0.3s ease;\">刪除使用者</button></form></td>");
+                echo "</tr>";
+            }
+            echo "</table>";
+
+            // echo "<div class='pagination'>";
+            // for ($i = 1; $i <= $total_pages; $i++) {
+            //     if ($i == $current_page) {
+            //         echo "<a href='#' class='active'>$i</a>";
+            //     } else {
+            //         echo "<a href='manageAccounts.php?page=".$i."'>$i</a>";
+            //     }
+            // }
+            // echo "</div>";
+        ?>
+    </div>
+    <div class="bg-light rounded h-100 d-flex align-items-center p-5">
+        <?php
+            echo "<div class='pagination'>第";
+            for ($i = 1; $i <= $total_pages; $i++) {
+                if ($i == $current_page) {
+                    echo "<a href='#' class='active'>$i</a>";
+                } else {
+                    echo "<a href='manageAccounts.php?page=".$i."'>$i</a>";
+                }
+            }
+            echo "頁</div>";
+        ?>
+    </div>
 
 
 

@@ -1,9 +1,11 @@
+
 <?php
     session_start();
 ?>
 <!DOCTYPE html>
 <html lang="en">
-<head>    
+
+<head>
     <meta charset="utf-8">
     <title>丹尼斯的保鮮盒</title>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
@@ -33,25 +35,20 @@
     <!-- Template Stylesheet -->
     <link href="css/style.css" rel="stylesheet">
     <style>
-       /* 基本重置和字體設置 */
         h1, h2, h3, p {
             margin: 0;
             padding: 0;
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            color: #333;
+            font-family: Arial, sans-serif;
         }
 
-        /* 主容器設計，包含背景和陰影 */
         .container_list {
             width: 90%;
             margin: 20px auto;
-            background-color: #f4f8ff; /* 淺藍色背景 */
-            padding: 20px;
-            border-radius: 8px; /* 圓角邊框 */
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); /* 輕微的陰影 */
+            background-color: #fff;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
-        /* 排序條樣式 */
         .sort-bar {
             display: flex;
             justify-content: space-between;
@@ -60,45 +57,40 @@
         }
 
         .sort-bar select, .sort-bar input[type="text"], .sort-bar input[type="submit"] {
-            padding: 10px 15px;
+            padding: 8px 10px;
             margin-right: 10px;
-            border: 1px solid #d1e3ff; /* 淺藍色邊框 */
-            border-radius: 6px; /* 圓角邊框 */
-            background-color: #ffffff; /* 白色背景 */
+            border: 1px solid #ccc;
+            border-radius: 5px;
         }
 
         .sort-bar input[type="submit"] {
             cursor: pointer;
-            background-color: #007bff; /* 較深的藍色背景 */
+            background-color: #007BFF;
             color: white;
             border: none;
         }
 
-        h3 {
-            font-size: 1.5rem;
-            color: #0056b3; /* 淺藍色文字 */
-            margin-bottom: 20px;
-        }
-
-        /* 產品列表樣式 */
         .product-list {
             list-style: none;
-            padding: 0;
         }
 
         .product-list .product {
             display: flex;
             align-items: center;
-            border-bottom: 1px solid #e2e5ec; /* 更淺的藍色分隔線 */
+            border-bottom: 1px solid #eee;
             padding: 10px 0;
         }
 
+        .product-list .product:last-child {
+            border-bottom: none;
+        }
+
         .product-list .product img {
-            width: 100px; /* 保持圖片為方形 */
-            height: 100px;
-            object-fit: cover; /* 保證圖片充滿容器 */
+            width: 100px; /* 固定图片大小 */
+            height: 100px; /* 固定图片大小 */
+            object-fit: cover; /* 保证图片比例正确 */
             margin-right: 20px;
-            border-radius: 5px; /* 圓角 */
+            border-radius: 5px;
         }
 
         .product-list .product-info {
@@ -113,145 +105,11 @@
         .product-list .product-info .upload-date {
             margin: 0 10px;
         }
-
-        /* 分頁樣式 */
-        .pagination {
-            list-style: none;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        .pagination .page-item {
-            margin: 0 5px;
-        }
-
-        .pagination .page-link {
-            display: block;
-            padding: 8px 12px;
-            background-color: #d1e3ff;
-            color: #0056b3;
-            border-radius: 4px;
-            text-decoration: none;
-        }
-
-        .pagination .page-link:hover {
-            background-color: #b9d1f8;
-        }
-        .add-to-cart {
-            padding: 10px 20px;
-            font-size: 1rem;
-            color: white;
-            background: linear-gradient(145deg, #006bff, #0056b3);
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
-        }
-
-        .add-to-cart:hover {
-            background: linear-gradient(145deg, #0056b3, #0041a8);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.24);
-        }
-
-        .add-to-cart:active {
-            background: #0041a8;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
-        }
-
     </style>
     <?php
         if (!isset($_SESSION['username'])) {
             echo "<script>alert('偵測到未登入'); window.location.href = 'login.php';</script>";
             exit(); 
-        }
-        include "database_connection.php";
-
-        
-        $recordsPerPage = 20;
-        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-        $offset = ($page - 1) * $recordsPerPage;
-
-        
-        $sortTime = $_GET['sort-time'] ?? 'newest';
-        $sortPrice = $_GET['sort-price'] ?? 'highest';
-        $sortCategory = $_GET['sort-category'] ?? '';
-        $searchTerm = $_GET['search'] ?? '';
-
-        
-        $sql = "SELECT * FROM product WHERE 1=1";
-
-        
-        if (!empty($searchTerm)) {
-            $sql .= " AND pName LIKE :searchTerm";
-        }
-
-        
-        if (!empty($sortCategory)) {
-            $sql .= " AND type = :sortCategory";
-        }
-
-        
-        $orderClause = [];
-        if ($sortTime == 'newest') {
-            $orderClause[] = "uploadDate DESC";
-        } elseif ($sortTime == 'oldest') {
-            $orderClause[] = "uploadDate ASC";
-        }
-        if ($sortPrice == 'highest') {
-            $orderClause[] = "price DESC";
-        } elseif ($sortPrice == 'lowest') {
-            $orderClause[] = "price ASC";
-        }
-        if (!empty($orderClause)) {
-            $sql .= " ORDER BY " . implode(', ', $orderClause);
-        }
-
-        
-        $sql .= " LIMIT :offset, :recordsPerPage";
-
-        $stmt = $db->prepare($sql);
-        if (!empty($searchTerm)) {
-            $searchTerm = "%" . $searchTerm . "%";
-            $stmt->bindParam(':searchTerm', $searchTerm, PDO::PARAM_STR);
-        }
-        if (!empty($sortCategory)) {
-            $stmt->bindParam(':sortCategory', $sortCategory, PDO::PARAM_STR);
-        }
-        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
-        $stmt->bindParam(':recordsPerPage', $recordsPerPage, PDO::PARAM_INT);
-        $stmt->execute();
-
-      
-        $countSql = "SELECT COUNT(*) FROM product WHERE 1=1";
-        
-        $countStmt = $db->prepare($countSql);
- 
-        $countStmt->execute();
-        $totalRecords = $countStmt->fetchColumn();
-        $numPages = ceil($totalRecords / $recordsPerPage);
-    ?>
-    <?php
-        if (($_SERVER['REQUEST_METHOD'] === "POST")&&($_POST['addToCart'])){
-            $checkCartExists = $db->prepare("SELECT COUNT(*) FROM cart WHERE PID = :PID AND ID = :ID");
-            $checkCartExists -> bindParam(':PID', $_POST['addToCartPID']);
-            $checkCartExists -> bindParam(':ID', $_SESSION['user_id']);
-            $checkCartExists -> execute();
-            if($checkCartExists->fetchColumn() > 0) {
-                ob_end_flush();
-                echo "<script>alert('該物品先前已加入我的購物車');</script>";
-                echo '<script>window.location.href="organs.php";</script>';
-            } else {
-                $stmt = $db->prepare("INSERT INTO `cart`(`ID`, `PID`) VALUES (:userID, :PID)");
-                $stmt -> bindParam(':userID', $_SESSION['user_id']);
-                $stmt -> bindParam(':PID', $_POST['addToCartPID']);
-                $stmt->execute();
-                ob_end_flush();
-                echo "<script>alert('已加入我的購物車');</script>";
-                echo '<script>window.location.href="organs.php";</script>';
-            }
         }
     ?>
 </head>
@@ -314,53 +172,51 @@
 
     <!-- Header Start -->
     <div class="bg-light rounded h-100 d-flex align-items-center p-5">
-    <div class="container_list">
-        <h3>賣場物品清單</h3>
-        <form action="organs.php" method="GET">
-            <div class="sort-bar">
-                <select name="sort-time" id="sort-time">
-                    <option value="newest">最新</option>
-                    <option value="oldest">最舊</option>
-                </select>
-                <select name="sort-price" id="sort-price">
-                    <option value="highest">價格高到低</option>
-                    <option value="lowest">價格低到高</option>
-                </select>
-                <select name="sort-category" id="sort-category">
-                    <option value="">所有分類</option>
-                    <option value="organ">器官</option>
-                    <option value="tissue">組織</option>
-                </select>
-                <input name="search" placeholder="輸入你想要搜尋的內容">
-                <input type="submit" value="搜尋">
-            </div>
-        </form>
-        <ul class="product-list">
-            <?php
-                while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                    echo '<li class="product">';
-                    echo '<img src="data:image/jpeg;base64,'.base64_encode($row['image']).'" alt="Product Image">';
-                    echo '<div class="product-info">';
-                    echo '<span class="name">' . htmlspecialchars($row['pName']) . '</span>';
-                    echo '<span class="price">$' . number_format($row['price'], 2) . '</span>';
-                    echo '<span class="upload-date">' . $row['uploadDate'] . '</span>';
-                    echo "<form action='organs.php' method='post'><input name='addToCartPID' value=".$row['PID']." type='hidden'>";
-                    echo '<button type="submit" name="addToCart" value="true" class="add-to-cart">加入我的購物車</button></form>';
-                    echo '</div>';
-                    echo '</li>';
-                }
-            ?>
-        </ul>
-        <nav>
-            <ul class="pagination">
-                <?php
-                    for ($page = 1; $page <= $numPages; $page++) {
-                        echo '<li class="page-item"><a class="page-link" href="?page=' . $page . '">' . $page . '</a></li>';
-                    }
-                ?>
+        <div class="container_list">
+            <h3>物品清單</h3>
+            <form action="">
+                <div class="sort-bar">
+                    <select id="sort-time">
+                        <option value="newest">最新</option>
+                        <option value="oldest">最舊</option>
+                    </select>
+                    <select id="sort-price">
+                        <option value="highest">價格高到低</option>
+                        <option value="lowest">價格低到高</option>
+                    </select>
+                    <select id="sort-category">
+                        <option value="">所有分類</option>
+                        <option value="organ">器官</option>
+                        <option value="tissue">組織</option>
+                    </select>
+                        <input name="search" placeholder="輸入你想要搜尋的內容">
+                        <input type="submit" value="搜尋">
+                </div>
+            </form>
+            <ul class="product-list">
+                <!-- <li class="product">商品1 - 描述 - 價格</li>
+                <li class="product">商品2 - 描述 - 價格</li>
+                <li class="product">商品3 - 描述 - 價格</li> -->
+                <li class="product">
+                    <img src="path/to/image.jpg" alt="Product Image">
+                    <div class="product-info">
+                        <span class="name">物品名稱</span>
+                        <span class="price">$100.00</span>
+                        <span class="upload-date">2021-08-01</span>
+                        <span class="upload-date"><button class="add-to-cart">加入我的購物車</button></span>
+                    </div>
+                </li>
+                <li class="product">
+                    <img src="path/to/image.jpg" alt="Product Image">
+                    <div class="product-info">
+                        <span class="name">物品名稱</span>
+                        <span class="price">$100.00</span>
+                        <span class="upload-date">2021-08-01</span>
+                        <button class="add-to-cart">加入我的購物車</button>
+                    </div>
+                </li>
             </ul>
-        </nav>
-    </div>
+        </div>
     </div>
     <!-- Header End -->
 

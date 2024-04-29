@@ -174,61 +174,16 @@
         $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         $offset = ($page - 1) * $recordsPerPage;
 
-        
-        $sortTime = $_GET['sort-time'] ?? 'newest';
-        $sortPrice = $_GET['sort-price'] ?? 'highest';
-        $sortCategory = $_GET['sort-category'] ?? '';
-        $searchTerm = $_GET['search'] ?? '';
-
-        
-        $sql = "SELECT * FROM product WHERE 1=1";
-
-        
-        if (!empty($searchTerm)) {
-            $sql .= " AND pName LIKE :searchTerm";
-        }
-
-        
-        if (!empty($sortCategory)) {
-            $sql .= " AND type = :sortCategory";
-        }
-
-        
-        $orderClause = [];
-        if ($sortTime == 'newest') {
-            $orderClause[] = "uploadDate DESC";
-        } elseif ($sortTime == 'oldest') {
-            $orderClause[] = "uploadDate ASC";
-        }
-        if ($sortPrice == 'highest') {
-            $orderClause[] = "price DESC";
-        } elseif ($sortPrice == 'lowest') {
-            $orderClause[] = "price ASC";
-        }
-        if (!empty($orderClause)) {
-            $sql .= " ORDER BY " . implode(', ', $orderClause);
-        }
-
-        
-        $sql .= " LIMIT :offset, :recordsPerPage";
-
+        $sql = "SELECT * FROM product WHERE ownerID = :ownerID";
         $stmt = $db->prepare($sql);
-        if (!empty($searchTerm)) {
-            $searchTerm = "%" . $searchTerm . "%";
-            $stmt->bindParam(':searchTerm', $searchTerm, PDO::PARAM_STR);
-        }
-        if (!empty($sortCategory)) {
-            $stmt->bindParam(':sortCategory', $sortCategory, PDO::PARAM_STR);
-        }
-        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
-        $stmt->bindParam(':recordsPerPage', $recordsPerPage, PDO::PARAM_INT);
+        $stmt->bindParam(':ownerID', $_SESSION['user_id']);
         $stmt->execute();
 
       
-        $countSql = "SELECT COUNT(*) FROM product WHERE 1=1";
+        $countSql = "SELECT COUNT(*) FROM product WHERE ownerID = :ownerID";
         
         $countStmt = $db->prepare($countSql);
- 
+        $countStmt->bindParam(':ownerID', $_SESSION['user_id']);
         $countStmt->execute();
         $totalRecords = $countStmt->fetchColumn();
         $numPages = ceil($totalRecords / $recordsPerPage);
@@ -315,26 +270,7 @@
     <!-- Header Start -->
     <div class="bg-light rounded h-100 d-flex align-items-center p-5">
     <div class="container_list">
-        <h3>賣場物品清單</h3>
-        <form action="organs.php" method="GET">
-            <div class="sort-bar">
-                <select name="sort-time" id="sort-time">
-                    <option value="newest">最新</option>
-                    <option value="oldest">最舊</option>
-                </select>
-                <select name="sort-price" id="sort-price">
-                    <option value="highest">價格高到低</option>
-                    <option value="lowest">價格低到高</option>
-                </select>
-                <select name="sort-category" id="sort-category">
-                    <option value="">所有分類</option>
-                    <option value="organ">器官</option>
-                    <option value="tissue">組織</option>
-                </select>
-                <input name="search" placeholder="輸入你想要搜尋的內容">
-                <input type="submit" value="搜尋">
-            </div>
-        </form>
+        <h3>我的上架列表</h3>
         <ul class="product-list">
             <?php
                 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -344,8 +280,8 @@
                     echo '<span class="name">' . htmlspecialchars($row['pName']) . '</span>';
                     echo '<span class="price">$' . number_format($row['price'], 2) . '</span>';
                     echo '<span class="upload-date">' . $row['uploadDate'] . '</span>';
-                    echo "<form action='organs.php' method='post'><input name='addToCartPID' value=".$row['PID']." type='hidden'>";
-                    echo '<button type="submit" name="addToCart" value="true" class="add-to-cart">加入我的購物車</button></form>';
+                    echo "<form><input name='addToCartPID' value=".$row['PID']." type='hidden'>";
+                    echo '<button type="submit" name="addToCart" value="true" class="add-to-cart">編輯</button></form>';
                     echo '</div>';
                     echo '</li>';
                 }

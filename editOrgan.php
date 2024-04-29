@@ -33,76 +33,109 @@
 
     <!-- Template Stylesheet -->
     <link href="css/style.css" rel="stylesheet">
+    <style>
+        form {
+            background-color: white; /* 表單背景設為白色 */
+            padding: 20px;
+            border-radius: 8px; /* 圓角邊框 */
+            box-shadow: 0 0 10px rgba(0,0,0,0.1); /* 輕微陰影效果 */
+            width: 100%; /* 表單寬度 */
+            max-width: 500px; /* 最大寬度為500px */
+        }
+
+        h1 {
+            color: #333; /* 深灰色標題 */
+            text-align: center; /* 標題文字置中 */
+        }
+
+        label {
+            margin-top: 10px; /* 每個標籤上方留白 */
+            display: block; /* 確保每個元素佔滿一整行 */
+            color: #666; /* 文字顏色 */
+            font-size: 16px; /* 字體大小 */
+        }
+
+        input[type="text"],
+        textarea,
+        input[type="file"] {
+            width: calc(100% - 22px); /* 輸入框寬度為容器寬度減去邊框 */
+            padding: 10px; /* 內邊距 */
+            margin-top: 5px; /* 上邊距 */
+            border: 1px solid #ddd; /* 邊框顏色 */
+            border-radius: 4px; /* 圓角邊框 */
+        }
+
+        textarea {
+            height: 100px; /* 文本域高度 */
+            resize: vertical; /* 允許垂直調整大小 */
+        }
+
+        input[type="submit"] {
+            background-color: #0056b3; /* 提交按鈕背景色 */
+            color: white; /* 文字顏色 */
+            padding: 10px 20px; /* 內邊距 */
+            border: none; /* 無邊框 */
+            border-radius: 4px; /* 圓角邊框 */
+            cursor: pointer; /* 滑鼠指針變為手型 */
+            display: block; /* 確保占滿整行 */
+            width: 100%; /* 寬度 */
+            margin-top: 20px; /* 上邊距 */
+        }
+
+        input[type="submit"]:hover {
+            background-color: #004494; /* 鼠標懸停時的背景色 */
+        }
+    </style>
     <?php
         if (!isset($_SESSION['username'])) {
             echo "<script>alert('偵測到未登入'); window.location.href = 'login.php';</script>";
             exit(); 
         }
 
-        include "database_connection.php";
-        
-        try {
-            $stmt = $db->prepare("SELECT * FROM users WHERE username = :username");
-            $stmt->bindParam(':username', $_SESSION['username']);
-            $stmt->execute();
-        
-            if ($stmt->rowCount() > 0) {
-                $user = $stmt->fetch(PDO::FETCH_ASSOC);
-                $role = $user['role'];
-                $userRealName = $user['userRealName'];
-                $email = $user['email'];
-                $phoneNumber = $user['phoneNumber'];
-                $bloodType = $user['bloodType'];
-                $birthday = $user['birthday'];
-                $username = $user['username'];
-
-                if($_SESSION['role'] != "user"){ //非一般權限使用者不處理生日格式字串
-                    $formattedBirthday = $birthday;
-                } else {
-                    $birthdayParts = explode("/", $birthday);
-                    $formattedBirthday = $birthdayParts[2] . "-" . $birthdayParts[0] . "-" . $birthdayParts[1];
-                }
-
-            } else {
-                //echo "No user found with that username.";
-            }
-        } catch (PDOException $e) {
-            die("Database error: " . $e->getMessage());
-        }
-    ?>
-    <?php
-        if (($_SERVER['REQUEST_METHOD'] === "POST")&&(isset($_POST['update']))){ //update stands for the field name
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
             include "database_connection.php";
-            $fieldToUpdate = $_POST['update'];
-            $updateValue = $_POST[$fieldToUpdate]?? '';
-            // echo "<script>alert('".$fieldToUpdate.$updateValue."');</script>";
+            
+            $pName = $_POST['name'];
+            $description = $_POST['description'];
+            $price = $_POST['price'];
+            $type = $_POST['type'];
+            $image = $_FILES['image'];
+            $todayDate = date('Y-m-d H:i:s');
+            
+            if (empty($pName) || empty($price) || $type == "" || $image['error'] !== UPLOAD_ERR_OK) {
+                echo "<script>alert('請填寫所有欄位並選擇一個圖片');</script>";
+            } else {
+                $check = getimagesize($image["tmp_name"]);
+                if ($check !== false) {
+                    $imageContent = file_get_contents($image["tmp_name"]); 
 
-            if ($fieldToUpdate === 'password') { //處理更改密碼需要加密的部分
-                if (($_POST['password'] === $_POST['confirmPassword']) && (strlen($_POST['password']) >= 4 && strlen($_POST['password']) <= 50)) {
-                    $updateValue = password_hash($_POST['password'], PASSWORD_DEFAULT);
+                    if ($imageContent !== false) {
+                        $sql = "INSERT INTO product (pName, ownerID, description, price, type, image, uploadDate) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                        $stmt = $db->prepare($sql);
+                        $stmt->bindParam(1, $pName);
+                        $stmt->bindParam(2, $_SESSION['user_id']);
+                        $stmt->bindParam(3, $description);
+                        $stmt->bindParam(4, $price);
+                        $stmt->bindParam(5, $type);
+                        $stmt->bindParam(6, $imageContent, PDO::PARAM_LOB);
+                        $stmt->bindParam(7, $todayDate);
+
+                        if ($stmt->execute()) {
+                            echo "<script>alert('器官已成功上傳');</script>";
+                        } else {
+                            echo "<script>alert('器官上傳失敗：" . $stmt->errorInfo()[2] . "');</script>";
+                        }
+                    } else {
+                        echo "<script>alert('圖片讀取失敗');</script>";
+                    }
                 } else {
-                    echo "<script>alert('密碼與確認密碼不相同或是密碼長度低於4個字元或高於50個字元'); window.history.back();</script>";
-                    exit();
+                    echo "<script>alert('所上傳文件非有效的圖片');</script>";
                 }
             }
-
-            try { //更新資料庫
-                $stmt = $db->prepare("UPDATE users SET `$fieldToUpdate` = :updateValue WHERE id = :id");
-                $stmt->bindParam(':updateValue', $updateValue);
-                $stmt->bindParam(':id', $_SESSION['user_id']);
-                $stmt->execute();
-        
-                if ($stmt->rowCount() > 0) {
-                    echo "<script>alert('更新成功'); window.location.href = 'myAccount.php';</script>";
-                    if($fieldToUpdate == "userRealName") $_SESSION['userRealName'] = $updateValue; 
-                } else {
-                    echo "<script>alert('無變更導致的未更新'); window.history.back();</script>";
-                }
-            } catch (PDOException $e) {
-                die("Database error during update: " . $e->getMessage());
-            }
+            // $db->close();
         }
-    ?>
+        ?>
+
 </head>
 
 <body>
@@ -138,6 +171,7 @@
     </div>
     <!-- Topbar End -->
 
+
     <!-- Navbar Start -->
     <nav class="navbar navbar-expand-lg bg-white navbar-light sticky-top p-0 wow fadeIn" data-wow-delay="0.1s">
         <a href="organs.php" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
@@ -161,79 +195,35 @@
 
 
     <!-- Header Start -->
-    <div class="container-fluid header bg-primary p-0 mb-5">
-        
+    <div class="bg-light rounded h-100 d-flex align-items-center p-5">
+        <form action="uploadOrgan.php" method="POST" enctype="multipart/form-data">
+            <h3>上傳你的器官</h3>
+            <label for="name">輸入名稱:</label>
+            <input type="text" name="name" id="name" required><br><br>
+
+            <label for="description">請完成200字以內的敘述:</label>
+            <textarea name="description" id="description"></textarea><br><br>
+
+            <label for="price">設定價格:</label>
+            <input type="text" name="price" id="price" required><br><br>
+
+            <label for="price">分類:</label>
+            <select name="type" class="form-control border-0" >
+                <option value="" selected>請選擇</option>
+                <option value="組織">組織</option>
+                <option value="器官">器官</option>
+            </select>
+
+            <label for="image">上傳圖片:</label>
+            <input type="file" name="image" id="image" required><br><br>
+
+            <input type="submit" value="上傳器官">
+        </form>
     </div>
     <!-- Header End -->
 
-    <div class="bg-light rounded h-100 d-flex align-items-center p-5">
-        <table>
-            <tr>
-                <th>身分組</th>
-                <td><input type="text" class="form-control border-0" value="<?php echo $role;?>" readonly></td>
-                <td></td>
-            </tr>
-            <tr>
-                <form action="myAccount.php" method="post" autocomplete="off">
-                    <th>使用者姓名</th>
-                    <td><input type="text" name="userRealName" class="form-control border-0" value="<?php echo $userRealName;?>" ></td>
-                    <td><button type="submit" name="update" value="userRealName">更改姓名</button></td>
-                </form>
-            </tr>
-            <tr>
-                <form action="myAccount.php" method="post" autocomplete="off">
-                    <th>Email</th>
-                    <td><input type="email" name="email"  class="form-control border-0" value="<?php echo $email;?>" ></td>
-                    <td><button type="submit" name="update" value="email">更改Email</button></td>
-                </form>
-            </tr>
-            <tr>
-                <form action="myAccount.php" method="post" autocomplete="off">
-                    <th>手機號碼</th>
-                    <td><input type="tel" name="phoneNumber" class="form-control border-0" value="<?php echo $phoneNumber;?>" ></td>
-                    <td><button type="submit" name="update" value="phoneNumber">更改手機號碼</button></td>
-                </form>
-            </tr>
-            <tr>
-                <form action="myAccount.php" method="post" autocomplete="off">
-                    <th>血型</th>
-                    <td> 
-                        <select name="bloodType" class="form-control border-0" >
-                            <option value="A" <?php if($bloodType=="A") echo "selected"?>>A型</option>
-                            <option value="B" <?php if($bloodType=="B") echo "selected"?>>B型</option>
-                            <option value="AB" <?php if($bloodType=="AB") echo "selected"?>>AB型</option>
-                            <option value="O" <?php if($bloodType=="O") echo "selected"?>>O型</option>
-                            <option value="Rh+" <?php if($bloodType=="Rh+") echo "selected"?>>Rh陽性</option>
-                            <option value="Rh-" <?php if($bloodType=="Rh-") echo "selected"?>>Rh陰性</option>
-                            <option value="other" <?php if($bloodType=="other") echo "selected"?>>其他特殊血型系統(你的血型無法被常用血型系統描述)</option>
-                        </select>
-                    </td>
-                    <td><button type="submit" name="update" value="bloodType">更改血型</button></td>
-                </form>
-            </tr>
-            <tr>
-                <th>生日</th>
-                <td><input type="date" name="birthday" class="form-control border-0" value="<?php echo $formattedBirthday;?>" readonly></td>
-                <td><button disabled>更改生日</button></td>
-            </tr>
-            <tr>
-                    <th>使用者名稱</th>
-                    <td><input type="text" name="username" class="form-control border-0" value="<?php echo $username;?>" readonly></td>
-                    <td><button name="update" value="username" disabled>更改</button></td>
-            </tr>
-            <form action="myAccount.php" method="post" autocomplete="off">
-            <tr>
-                <th>密碼</th>
-                <td><input type="password" name="password" class="form-control border-0"></td>
-                <td rowspan="2" ><button type="submit" name="update" value="password">更改</button></td>
-            </tr>
-            <tr>
-                <th>再次確認密碼</th>
-                <td><input type="password" name="confirmPassword" class="form-control border-0"></td>
-            </tr>
-            </form>
-        </table>
-    </div>
+
+
 
     <!-- Footer Start -->
     <div class="container-fluid bg-dark text-light footer mt-5 pt-5 wow fadeIn" data-wow-delay="0.1s">

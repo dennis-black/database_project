@@ -1,3 +1,6 @@
+<?php
+    session_start();
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -32,7 +35,6 @@
     <link href="css/style.css" rel="stylesheet">
     
     <?php
-        session_start();
         if ($_SERVER['REQUEST_METHOD'] === "POST"){
             include "database_connection.php";
             $username = $_POST['username']?? '';

@@ -1,3 +1,6 @@
+<?php
+    session_start();
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -84,8 +87,6 @@
         }
     </style>
     <?php
-        session_start();
-
         if (!isset($_SESSION['username'])) {
             echo "<script>alert('偵測到未登入'); window.location.href = 'login.php';</script>";
             exit(); 
