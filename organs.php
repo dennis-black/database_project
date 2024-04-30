@@ -161,6 +161,56 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
         }
 
+        table {
+            width: 100%; /* 表格寬度占滿容器 */
+            border-collapse: collapse; /* 邊框合併 */
+            background-color: #f0f8ff; /* 淺藍色背景 */
+            font-family: Arial, sans-serif; /* 使用Arial或無襯線字體 */
+        }
+
+        /* 表頭樣式 */
+        th {
+            background-color: #e0efff; /* 表頭使用略深的藍色 */
+            color: #333; /* 文字顏色為深灰 */
+            padding: 10px; /* 內邊距 */
+            font-size: 16px; /* 字體大小 */
+            border-bottom: 2px solid #ccc; /* 底部有灰色邊框 */
+        }
+
+        /* 表格行樣式 */
+        td {
+            text-align: center; /* 文字居中顯示 */
+            padding: 8px; /* 內邊距 */
+            font-size: 14px; /* 字體大小 */
+        }
+
+        /* 表格行條紋效果 */
+        tr:nth-child(odd) {
+            background-color: #e6f1ff; /* 淺藍色條紋 */
+        }
+
+        /* 按鈕樣式 */
+        button {
+            background-color: #007bff; /* 按鈕背景色 */
+            color: white; /* 按鈕文字顏色 */
+            padding: 6px 12px; /* 內邊距 */
+            border: none; /* 無邊框 */
+            border-radius: 4px; /* 圓角邊框 */
+            cursor: pointer; /* 鼠標樣式 */
+            transition: background-color 0.3s; /* 過渡效果 */
+        }
+
+        /* 鼠標懸停在按鈕上時的效果 */
+        button:hover {
+            background-color: #0056b3; /* 按鈕深藍色 */
+        }
+
+        /* 產品圖片樣式 */
+        img {
+            width: 100px; /* 圖片寬度 */
+            height: auto; /* 高度自動 */
+        }
+
     </style>
     <?php
         if (!isset($_SESSION['username'])) {
@@ -337,18 +387,22 @@
         </form>
         <ul class="product-list">
             <?php
+                echo "<table><tr><th>名稱</th><th>價格</th><th>上架時間</th><th></th></tr>";
                 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                    echo '<li class="product">';
+                    echo "<tr>";
+                    echo '<td><li class="product">';
                     echo '<img src="data:image/jpeg;base64,'.base64_encode($row['image']).'" alt="Product Image">';
                     echo '<div class="product-info">';
-                    echo '<span class="name">' . htmlspecialchars($row['pName']) . '</span>';
-                    echo '<span class="price">$' . number_format($row['price'], 2) . '</span>';
-                    echo '<span class="upload-date">' . $row['uploadDate'] . '</span>';
-                    echo "<form action='organs.php' method='post'><input name='addToCartPID' value=".$row['PID']." type='hidden'>";
+                    echo '<span class="name">' . htmlspecialchars($row['pName']) . '</span></td>';
+                    echo '<td><span class="price">$' . number_format($row['price'], 2) . '</span></td>';
+                    echo '<td><span class="upload-date">' . $row['uploadDate'] . '</span></td>';
+                    echo "<td><form action='organs.php' method='post'><input name='addToCartPID' value=".$row['PID']." type='hidden'>";
                     echo '<button type="submit" name="addToCart" value="true" class="add-to-cart">加入我的購物車</button></form>';
                     echo '</div>';
                     echo '</li>';
+                    echo '</td></tr>';
                 }
+                echo "</table>";
             ?>
         </ul>
         <nav>

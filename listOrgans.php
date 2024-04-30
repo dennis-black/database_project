@@ -161,6 +161,79 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
         }
 
+        table {
+            width: 100%; /* 表格寬度占滿容器 */
+            border-collapse: collapse; /* 邊框合併 */
+            background-color: #f0f8ff; /* 淺藍色背景 */
+            font-family: Arial, sans-serif; /* 使用Arial或無襯線字體 */
+        }
+
+        /* 表頭樣式 */
+        th {
+            background-color: #e0efff; /* 表頭使用略深的藍色 */
+            color: #333; /* 文字顏色為深灰 */
+            padding: 10px; /* 內邊距 */
+            font-size: 16px; /* 字體大小 */
+            border-bottom: 2px solid #ccc; /* 底部有灰色邊框 */
+        }
+
+        /* 表格行樣式 */
+        td {
+            text-align: center; /* 文字居中顯示 */
+            padding: 8px; /* 內邊距 */
+            font-size: 14px; /* 字體大小 */
+        }
+
+        /* 表格行條紋效果 */
+        tr:nth-child(odd) {
+            background-color: #e6f1ff; /* 淺藍色條紋 */
+        }
+
+        /* 按鈕樣式 */
+        button {
+            background-color: #007bff; /* 按鈕背景色 */
+            color: white; /* 按鈕文字顏色 */
+            padding: 6px 12px; /* 內邊距 */
+            border: none; /* 無邊框 */
+            border-radius: 4px; /* 圓角邊框 */
+            cursor: pointer; /* 鼠標樣式 */
+            transition: background-color 0.3s; /* 過渡效果 */
+        }
+
+        /* 鼠標懸停在按鈕上時的效果 */
+        button:hover {
+            background-color: #0056b3; /* 按鈕深藍色 */
+        }
+
+        /* 產品圖片樣式 */
+        img {
+            width: 100px; /* 圖片寬度 */
+            height: auto; /* 高度自動 */
+        }
+
+        .remove {
+            padding: 10px 20px;
+            font-size: 1rem;
+            color: white;
+            background: linear-gradient(145deg, #CE0000, #FF2D2D);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
+        }
+
+        .remove:hover {
+            background: linear-gradient(145deg, #FF9797, #FF9797);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.24);
+        }
+
+        .remove:active {
+            background: #0041a8;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+        }
+
+
     </style>
     <?php
         if (!isset($_SESSION['username'])) {
@@ -189,24 +262,13 @@
         $numPages = ceil($totalRecords / $recordsPerPage);
     ?>
     <?php
-        if (($_SERVER['REQUEST_METHOD'] === "POST")&&($_POST['addToCart'])){
-            $checkCartExists = $db->prepare("SELECT COUNT(*) FROM cart WHERE PID = :PID AND ID = :ID");
-            $checkCartExists -> bindParam(':PID', $_POST['addToCartPID']);
-            $checkCartExists -> bindParam(':ID', $_SESSION['user_id']);
-            $checkCartExists -> execute();
-            if($checkCartExists->fetchColumn() > 0) {
-                ob_end_flush();
-                echo "<script>alert('該物品先前已加入我的購物車');</script>";
-                echo '<script>window.location.href="organs.php";</script>';
-            } else {
-                $stmt = $db->prepare("INSERT INTO `cart`(`ID`, `PID`) VALUES (:userID, :PID)");
-                $stmt -> bindParam(':userID', $_SESSION['user_id']);
-                $stmt -> bindParam(':PID', $_POST['addToCartPID']);
-                $stmt->execute();
-                ob_end_flush();
-                echo "<script>alert('已加入我的購物車');</script>";
-                echo '<script>window.location.href="organs.php";</script>';
-            }
+        if (($_SERVER['REQUEST_METHOD'] === "POST")&&($_POST['remove'])){
+            $stmt = $db->prepare("DELETE FROM product WHERE PID = :PID");
+            // $stmt -> bindParam(':userID', $_SESSION['user_id']);
+            $stmt -> bindParam(':PID', $_POST['removePID']);
+            $stmt->execute();
+            echo "<script>alert('已從上架中刪除');</script>";
+            echo '<script>window.location.href="listOrgans.php";</script>';
         }
     ?>
 </head>
@@ -273,18 +335,24 @@
         <h3>我的上架列表</h3>
         <ul class="product-list">
             <?php
+                echo "<table><tr><th>名稱</th><th>價格</th><th>上架時間</th><th></th><th></th></tr>";
                 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                    echo '<li class="product">';
+                    echo "<tr>";
+                    echo '<td><li class="product">';
                     echo '<img src="data:image/jpeg;base64,'.base64_encode($row['image']).'" alt="Product Image">';
                     echo '<div class="product-info">';
-                    echo '<span class="name">' . htmlspecialchars($row['pName']) . '</span>';
-                    echo '<span class="price">$' . number_format($row['price'], 2) . '</span>';
-                    echo '<span class="upload-date">' . $row['uploadDate'] . '</span>';
-                    echo "<form><input name='addToCartPID' value=".$row['PID']." type='hidden'>";
-                    echo '<button type="submit" name="addToCart" value="true" class="add-to-cart">編輯</button></form>';
+                    echo '<span class="name">' . htmlspecialchars($row['pName']) . '</span></td>';
+                    echo '<td><span class="price">$' . number_format($row['price'], 2) . '</span></td>';
+                    echo '<td><span class="upload-date">' . $row['uploadDate'] . '</span></td>';
+                    echo "<td><form action='listOrgans.php'><input name='addToCartPID' value=".$row['PID']." type='hidden'>";
+                    echo '<button type="submit" name="edit" value="true" class="add-to-cart">編輯</button></form></td>';
+                    echo "<td><form action='listOrgans.php' method='post'><input name='removePID' value=".$row['PID']." type='hidden'>";
+                    echo '<button type="submit" name="remove" value="true" class="remove">移除下架</button></form></td>';
                     echo '</div>';
                     echo '</li>';
+                    echo '</tr>';
                 }
+                echo "</table>";
             ?>
         </ul>
         <nav>
