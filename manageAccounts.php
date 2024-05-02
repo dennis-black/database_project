@@ -86,16 +86,7 @@
         $stmt->execute();
 
     ?>
-    <?php
-        if (($_SERVER['REQUEST_METHOD'] === "POST")&&(isset($_POST['deleteID']))){
-            include "database_connection.php";
-            $deleteUserID = $_POST['deleteID'];
-            $stmt = $db -> prepare("DELETE FROM `users` WHERE ID = :deleteID");
-            $stmt->bindParam(':deleteID', $deleteUserID);
-            $stmt->execute();
-            header("location: manageAccounts.php");
-        }
-    ?>
+
     <style>
         table {
             width: 100%;        /* 表格寬度佔滿父元素 */
@@ -199,7 +190,8 @@
             echo "<tr><th>ID</th><th>身分組</th><th>使用者姓名</th><th>使用者名稱</th><th>血型</th><th>生日</th><th>電話</th><th>電子郵件</th></tr>";
             while ($user = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 echo "<tr><td>" . htmlspecialchars($user['ID']) . "</td><td>" . htmlspecialchars($user['role']) . "</td><td>" . htmlspecialchars($user['userRealName']) . "</td><td>" . htmlspecialchars($user['username']) . "</td><td>" . htmlspecialchars($user['bloodType']) . "</td><td>" . htmlspecialchars($user['birthday']) . "</td><td>" . htmlspecialchars($user['phoneNumber']) . "</td><td>" . htmlspecialchars($user['email']) . "</td>";
-                echo "<td><form action=\"manageAccounts.php\" method=\"post\" onsubmit=\"return confirmDelete();\">". ((($user['role'] === "admin")||($user['role'] === "root")) ? "" : "<input type=\"hidden\" name=\"deleteID\" value=\"".$user['ID']."\"><button type=\"submit\" style=\"background-color: #ff4d4d; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; transition: background 0.3s ease;\">刪除使用者</button></form></td>");
+                echo "<td>".((($user['role'] === "admin")||($user['role'] === "root")) ? "</td>" : "<form action=\"manageAccounts.php\" method=\"post\" onsubmit=\"return confirmDelete();\"><input type=\"hidden\" name=\"deleteID\" value=\"".$user['ID']."\"><button type=\"submit\" name=\"removeUserFlag\" value=\"true\" style=\"background-color: #ff4d4d; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; transition: background 0.3s ease;\">刪除使用者</button></form></td>");
+                echo "<td><form action=\"manageAccounts.php\" method=\"post\" onsubmit=\"return confirmDelete();\"><input type=\"hidden\" name=\"resetPasswordID\" value=\"".$user['ID']."\"><button type=\"submit\" name=\"resetFlag\" value=\"true\" style=\"background-color: #0080FF; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; transition: background 0.3s ease;\">重設密碼</button></form></td>";
                 echo "</tr>";
             }
             echo "</table>";
@@ -228,9 +220,36 @@
             echo "頁</div>";
         ?>
     </div>
+    <?php
+        if (($_SERVER['REQUEST_METHOD'] === "POST")&&($_POST['removeUserFlag'])){
+            include "database_connection.php";
+            $deleteUserID = $_POST['deleteID'];
+            $stmt = $db -> prepare("DELETE FROM `users` WHERE ID = :deleteID");
+            $stmt->bindParam(':deleteID', $deleteUserID);
+            $stmt->execute();
+            header("location: manageAccounts.php");
+        }
+    ?>
 
+    <?php
+        if (($_SERVER['REQUEST_METHOD'] === "POST")&&($_POST['resetFlag'])){
+            include "database_connection.php";
+            //find username
+            $resetPasswordID = $_POST['resetPasswordID'];
+            $findUsername = $db -> prepare("SELECT username FROM `users` WHERE ID = :ID");
+            $findUsername -> bindParam(':ID', $resetPasswordID);
+            $findUsername -> execute();
+            $user = $findUsername -> fetch(PDO::FETCH_ASSOC);
 
-
+            $stmt = $db -> prepare("UPDATE `users` SET `password` = :newPassword WHERE ID = :resetPasswordID"); // await
+            $newPassword = password_hash($user['username'], PASSWORD_DEFAULT);
+            $stmt->bindParam(':newPassword', $newPassword);
+            $stmt->bindParam(':resetPasswordID', $resetPasswordID);
+            $stmt->execute();
+            echo "<script>alert('密碼已經更新為使用者名稱'); window.location.href='manageAccounts.php';</script>";
+            exit;
+        }
+    ?>
 
     <!-- Footer Start -->
     <div class="container-fluid bg-dark text-light footer mt-5 pt-5 wow fadeIn" data-wow-delay="0.1s">
