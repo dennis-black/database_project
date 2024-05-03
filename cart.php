@@ -179,7 +179,7 @@
 
         /* 表格行樣式 */
         td {
-            text-align: center; /* 文字居中顯示 */
+            text-align: left; /* 文字居中顯示 */
             padding: 8px; /* 內邊距 */
             font-size: 14px; /* 字體大小 */
         }
@@ -211,6 +211,31 @@
             height: auto; /* 高度自動 */
         }
 
+        .product-link {
+            text-decoration: none;
+            color: inherit; /* Ensures the text doesn't change color */
+            display: inline-block; /* Makes the link wrap its content only */
+        }
+
+        .product-link img {
+            vertical-align: middle; /* Aligns the image nicely with the text */
+            margin-right: 10px; /* Adds some space between the image and the text */
+        }
+
+        .product-list th, .product-list td {
+            padding: 10px; /* Adds padding for table cells */
+            border-bottom: 1px solid #ccc; /* Adds a light border to each row */
+        }
+
+        .remove-from-cart {
+            background-color: #f44336; /* Red background for removal button */
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
     </style>
     <?php
         if (!isset($_SESSION['username'])) {
@@ -225,34 +250,34 @@
         include "database_connection.php";
 
         
-        $recordsPerPage = 20;
-        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-        $offset = ($page - 1) * $recordsPerPage;
+        // $recordsPerPage = 20;
+        // $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        // $offset = ($page - 1) * $recordsPerPage;
 
         
-        $sortTime = $_GET['sort-time'] ?? 'newest';
-        $sortPrice = $_GET['sort-price'] ?? 'highest';
-        $sortCategory = $_GET['sort-category'] ?? '';
-        $searchTerm = $_GET['search'] ?? '';
+        // $sortTime = $_GET['sort-time'] ?? 'newest';
+        // $sortPrice = $_GET['sort-price'] ?? 'highest';
+        // $sortCategory = $_GET['sort-category'] ?? '';
+        // $searchTerm = $_GET['search'] ?? '';
 
         
         // $sql = "SELECT * FROM product WHERE 1=1";
         $sql = "SELECT * FROM product t1
                 JOIN cart t2 ON t1.PID = t2.PID
                 WHERE t2.ID = :ID";
-        $countSql = "SELECT COUNT(*) FROM product t1
-                    JOIN cart t2 ON t1.PID = t2.PID
-                    WHERE t2.ID = :ID";
+        // $countSql = "SELECT COUNT(*) FROM product t1
+        //             JOIN cart t2 ON t1.PID = t2.PID
+        //             WHERE t2.ID = :ID";
 
         $stmt = $db->prepare($sql);
         $stmt -> bindParam(':ID', $_SESSION['user_id']);
         $stmt->execute();
         
-        $countStmt = $db->prepare($countSql);
-        $countStmt -> bindParam(':ID', $_SESSION['user_id']);
-        $countStmt->execute();
-        $totalRecords = $countStmt->fetchColumn();
-        $numPages = ceil($totalRecords / $recordsPerPage);
+        // $countStmt = $db->prepare($countSql);
+        // $countStmt -> bindParam(':ID', $_SESSION['user_id']);
+        // $countStmt->execute();
+        // $totalRecords = $countStmt->fetchColumn();
+        // $numPages = ceil($totalRecords / $recordsPerPage);
     ?>
     <?php
         if (($_SERVER['REQUEST_METHOD'] === "POST")&&($_POST['removeFromCart'])){
@@ -323,7 +348,6 @@
                 <a href="listOrgans.php" class="nav-item nav-link active">我的上架列表</a>
                 <a href="cart.php" class="nav-item nav-link active">我的購物車</a>
                 <a href="myAccount.php" class="nav-item nav-link active"><?php echo "歡迎，". $_SESSION['userRealName'];?></a>
-                <!-- <a href="aboutUs" class="nav-item nav-link">關於我們</a> -->
             </div>
             <a href="logout.php" class="btn btn-primary rounded-0 py-4 px-lg-5 d-none d-lg-block">登出<i class="fa fa-arrow-right ms-3"></i></a>
         </div>
@@ -335,65 +359,26 @@
     <div class="bg-light rounded h-100 d-flex align-items-center p-5">
     <div class="container_list">
         <h3>我的購物車</h3>
-        <!-- <form action="organs.php" method="GET">
-            <div class="sort-bar">
-                <select name="sort-time" id="sort-time">
-                    <option value="newest">最新</option>
-                    <option value="oldest">最舊</option>
-                </select>
-                <select name="sort-price" id="sort-price">
-                    <option value="highest">價格高到低</option>
-                    <option value="lowest">價格低到高</option>
-                </select>
-                <select name="sort-category" id="sort-category">
-                    <option value="">所有分類</option>
-                    <option value="organ">物品</option>
-                    <option value="tissue">組織</option>
-                </select>
-                <input name="search" placeholder="輸入你想要搜尋的內容">
-                <input type="submit" value="搜尋">
-            </div>
-        </form> -->
-        <ul class="product-list">
+        <table class="product-list">
+            <tr><th>名稱</th><th>價格</th><th>上架時間</th><th></th></tr>
             <?php
-                // echo "<table><tr><th>名稱</th><th>價格</th><th>上架時間</th><th></th></tr>";
-                // while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                //     echo '<li class="product">';
-                //     echo '<img src="data:image/jpeg;base64,'.base64_encode($row['image']).'" alt="Product Image">';
-                //     echo '<div class="product-info">';
-                //     echo '<span class="name">' . htmlspecialchars($row['pName']) . '</span>';
-                //     echo '<span class="price">$' . number_format($row['price'], 2) . '</span>';
-                //     echo '<span class="upload-date">' . $row['uploadDate'] . '</span>';
-                //     echo "<form action='cart.php' method='post'><input name='removeFromCartPID' value=".$row['PID']." type='hidden'>";
-                //     echo '<button type="submit" name="removeFromCart" value="true" class="remove-from-cart">從我的購物車移除</button></form>';
-                //     echo '</div>';
-                //     echo '</li>';
-                // }
-
-                echo "<table><tr><th>名稱</th><th>價格</th><th>上架時間</th><th></th></tr>";
                 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                     echo "<tr>";
-                    echo '<td><li class="product">';
-                    echo '<img src="data:image/jpeg;base64,'.base64_encode($row['image']).'" alt="Product Image">';
-                    echo '<div class="product-info">';
-                    echo '<span class="name">' . htmlspecialchars($row['pName']) . '</span></td>';
-                    echo '<td><span class="price">$' . number_format($row['price'], 2) . '</span></td>';
-                    echo '<td><span class="upload-date">' . $row['uploadDate'] . '</span></td>';
-                    echo "<td><form action='cart.php' method='post'><input name='removeFromCartPID' value=".$row['PID']." type='hidden'>";
-                    echo '<button type="submit" name="removeFromCart" value="true" class="remove-from-cart">從我的購物車移除</button></form>';
-                    echo '</div>';
-                    echo '</li>';
-                    echo '</td></tr>';
+                    echo "<td><a href='organDetail.php?pid=".$row['PID']."' class='product-link'><img src='data:image/jpeg;base64,".base64_encode($row['image'])."' alt='Product Image'><span class='name'>" . htmlspecialchars($row['pName']) . "</span></a></td>";
+                    echo "<td><span class='price'>$" . number_format($row['price'], 2) . "</span></td>";
+                    echo "<td><span class='upload-date'>" . $row['uploadDate'] . "</span></td>";
+                    echo "<td><form action='cart.php' method='post'><input name='removeFromCartPID' value='".$row['PID']."' type='hidden'><button type='submit' name='removeFromCart' value='true' class='remove-from-cart'>從我的購物車移除</button></form></td>";
+                    echo "</tr>";
                 }
-                echo "</table>";
             ?>
-        </ul>
+        </table>
+
         <nav>
             <ul class="pagination">
                 <?php
-                for ($page = 1; $page <= $numPages; $page++) {
-                    echo '<li class="page-item"><a class="page-link" href="?page=' . $page . '">' . $page . '</a></li>';
-                }
+                // for ($page = 1; $page <= $numPages; $page++) {
+                //     echo '<li class="page-item"><a class="page-link" href="?page=' . $page . '">' . $page . '</a></li>';
+                // }
                 ?>
             </ul>
         </nav>

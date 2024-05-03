@@ -179,7 +179,7 @@
 
         /* 表格行樣式 */
         td {
-            text-align: center; /* 文字居中顯示 */
+            text-align: left; /* 文字居中顯示 */
             padding: 8px; /* 內邊距 */
             font-size: 14px; /* 字體大小 */
         }
@@ -208,8 +208,20 @@
         /* 產品圖片樣式 */
         img {
             width: 100px; /* 圖片寬度 */
-            height: auto; /* 高度自動 */
+            height: auto; 高度自動
         }
+
+        .product-link {
+            text-decoration: none; /* Removes underline */
+            color: inherit; /* Inherits text color from parent */
+            display: flex;
+            align-items: center; /* Aligns the image and text vertically */
+        }
+
+        .product-link:hover {
+            text-decoration: underline; /* Adds an underline on hover for better user interaction feedback */
+        }
+
 
     </style>
     <?php
@@ -390,24 +402,23 @@
             </div>
         </form>
         <ul class="product-list">
-            <?php
-                echo "<table><tr><th>名稱</th><th>價格</th><th>上架時間</th><th></th></tr>";
-                while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                    echo "<tr>";
-                    echo '<td><li class="product">';
-                    echo '<img src="data:image/jpeg;base64,'.base64_encode($row['image']).'" alt="Product Image">';
-                    echo '<div class="product-info">';
-                    echo '<span class="name">' . htmlspecialchars($row['pName']) . '</span></td>';
-                    echo '<td><span class="price">$' . number_format($row['price'], 2) . '</span></td>';
-                    echo '<td><span class="upload-date">' . $row['uploadDate'] . '</span></td>';
-                    echo "<td><form action='organs.php' method='post'><input name='addToCartPID' value=".$row['PID']." type='hidden'>";
-                    echo '<button type="submit" name="addToCart" value="true" class="add-to-cart">加入我的購物車</button></form>';
-                    echo '</div>';
-                    echo '</li>';
-                    echo '</td></tr>';
-                }
-                echo "</table>";
-            ?>
+        <?php
+            echo "<table><tr><th>名稱</th><th>價格</th><th>上架時間</th><th></th></tr>";
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                echo "<tr>";
+                echo "<td>";
+                echo "<a href='organDetail.php?pid=".$row['PID']."' class='product-link'>";
+                echo "<img src='data:image/jpeg;base64,".base64_encode($row['image'])."' alt='Product Image' style='height:100px; vertical-align:middle; margin-right:10px;'>";
+                echo htmlspecialchars($row['pName']);
+                echo "</a>";
+                echo "</div></td>";
+                echo "<td><span class='price'>$" . number_format($row['price'], 2) . "</span></td>";
+                echo "<td><span class='upload-date'>" . $row['uploadDate'] . "</span></td>";
+                echo "<td><form action='organs.php' method='post'><input name='addToCartPID' value='".$row['PID']."' type='hidden'><button type='submit' name='addToCart' value='true' class='add-to-cart'>加入我的購物車</button></form></td>";
+                echo "</tr>";
+            }
+            echo "</table>";
+        ?>
         </ul>
         <nav>
             <ul class="pagination">

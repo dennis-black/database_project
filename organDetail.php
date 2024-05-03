@@ -104,6 +104,86 @@
         .product-list .product-info .upload-date {
             margin: 0 10px;
         }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #eef2f5;
+            margin: 0;
+            /* padding: 20px; */
+            color: #333;
+        }
+
+        .product-container {
+            background-color: #ffffff;
+            border: 1px solid #cdddee;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            display: flex;
+            align-items: flex-start;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .product-container img {
+            width: 50%;
+            height: auto;
+            border-radius: 8px;
+            margin-right: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .product-details {
+            display: flex;
+            flex-direction: column;
+            width: 50%;
+        }
+
+        .product-container h1 {
+            color: #007BFF;
+            font-size: 28px;
+            margin-bottom: 0.5em;
+        }
+
+        .price {
+            font-size: 22px;
+            color: #008800;
+            font-weight: bold;
+        }
+
+        .description {
+            font-size: 16px;
+            color: #555;
+            margin-top: 10px;
+            line-height: 1.6;
+        }
+
+        .date-added {
+            font-size: 14px;
+            color: #666;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        input[type="submit"] {
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #003d80;
+        }
+
+
     </style>
     <?php
         if (!isset($_SESSION['username'])) {
@@ -113,6 +193,39 @@
             echo "<script>alert('管理員無權訪問'); window.history.back();</script>";
             exit();
         }
+
+        include "database_connection.php";
+
+        $stmt = $db -> prepare("SELECT * FROM `product` WHERE `PID` = :PID");
+        $stmt -> bindParam(':PID', $_GET['pid']);
+        $stmt -> execute();
+        $info = $stmt -> fetch(PDO::FETCH_ASSOC);
+
+        $personWhoOwn = $db -> prepare("SELECT * FROM `users` WHERE `ID` = :ID");
+        $personWhoOwn -> bindParam(':ID', $info['ownerID']);
+        $personWhoOwn -> execute();
+        $personInfo = $personWhoOwn -> fetch(PDO::FETCH_ASSOC);
+    ?>
+    <?php
+            if ($_SERVER['REQUEST_METHOD'] === "POST"){
+                $checkCartExists = $db->prepare("SELECT COUNT(*) FROM cart WHERE PID = :PID AND ID = :ID");
+                $checkCartExists -> bindParam(':PID', $_POST['addToCartPID']);
+                $checkCartExists -> bindParam(':ID', $_SESSION['user_id']);
+                $checkCartExists -> execute();
+                if($checkCartExists->fetchColumn() > 0) {
+                    ob_end_flush();
+                    echo "<script>alert('該物品先前已加入我的購物車');</script>";
+                    echo '<script>window.location.href="organs.php";</script>';
+                } else {
+                    $stmt = $db->prepare("INSERT INTO `cart`(`ID`, `PID`) VALUES (:userID, :PID)");
+                    $stmt -> bindParam(':userID', $_SESSION['user_id']);
+                    $stmt -> bindParam(':PID', $_POST['addToCartPID']);
+                    $stmt->execute();
+                    ob_end_flush();
+                    echo "<script>alert('已加入我的購物車');</script>";
+                    echo '<script>window.location.href="organs.php";</script>';
+                }
+            }
     ?>
 </head>
 
@@ -174,50 +287,19 @@
 
     <!-- Header Start -->
     <div class="bg-light rounded h-100 d-flex align-items-center p-5">
-        <div class="container_list">
-            <h3>物品清單</h3>
-            <form action="">
-                <div class="sort-bar">
-                    <select id="sort-time">
-                        <option value="newest">最新</option>
-                        <option value="oldest">最舊</option>
-                    </select>
-                    <select id="sort-price">
-                        <option value="highest">價格高到低</option>
-                        <option value="lowest">價格低到高</option>
-                    </select>
-                    <select id="sort-category">
-                        <option value="">所有分類</option>
-                        <option value="organ">物品</option>
-                        <option value="tissue">組織</option>
-                    </select>
-                        <input name="search" placeholder="輸入你想要搜尋的內容">
-                        <input type="submit" value="搜尋">
-                </div>
-            </form>
-            <ul class="product-list">
-                <!-- <li class="product">商品1 - 描述 - 價格</li>
-                <li class="product">商品2 - 描述 - 價格</li>
-                <li class="product">商品3 - 描述 - 價格</li> -->
-                <li class="product">
-                    <img src="path/to/image.jpg" alt="Product Image">
-                    <div class="product-info">
-                        <span class="name">物品名稱</span>
-                        <span class="price">$100.00</span>
-                        <span class="upload-date">2021-08-01</span>
-                        <span class="upload-date"><button class="add-to-cart">加入我的購物車</button></span>
-                    </div>
-                </li>
-                <li class="product">
-                    <img src="path/to/image.jpg" alt="Product Image">
-                    <div class="product-info">
-                        <span class="name">物品名稱</span>
-                        <span class="price">$100.00</span>
-                        <span class="upload-date">2021-08-01</span>
-                        <button class="add-to-cart">加入我的購物車</button>
-                    </div>
-                </li>
-            </ul>
+        <div class="product-container">
+            <img src="data:image/jpeg;base64, <?php echo base64_encode($info['image']); ?>" alt="Product Image">
+            <div class="product-details">
+                <h1><?php echo $info['pName']; ?></h1>
+                <p class="price">$<?php echo $info['price']; ?></p>
+                <p class="description"><?php echo $info['description']; ?></p>
+                <p class="date-added">上架日期: <?php echo $info['uploadDate']; ?></p>
+                <p>該人類身體零件</br>製造於(擁有者生日)：<?php echo $personInfo['birthday'];?> ,之前流著 <?php echo $personInfo['bloodType'];?> 型血</p>
+                <form action="organDetail.php" method="post">
+                    <input type="hidden" name="addToCartPID" value="<?php echo $info['PID']; ?>">
+                    <input type="submit" value="加入購物車">
+                </form>
+            </div>
         </div>
     </div>
     <!-- Header End -->
