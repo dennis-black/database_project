@@ -236,6 +236,33 @@
             cursor: pointer;
         }
 
+        .product-list .total-line {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: right;
+            padding-top: 15px;
+        }
+
+        .checkout-container {
+            text-align: right;
+            margin-top: 20px;
+        }
+
+        .checkout-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .checkout-button:hover {
+            background-color: #45a049;
+        }
+
     </style>
     <?php
         if (!isset($_SESSION['username'])) {
@@ -361,27 +388,23 @@
         <h3>我的購物車</h3>
         <table class="product-list">
             <tr><th>名稱</th><th>價格</th><th>上架時間</th><th></th></tr>
-            <?php
+            <?php   
+                $paymentAmount = 0;
                 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                     echo "<tr>";
                     echo "<td><a href='organDetail.php?pid=".$row['PID']."' class='product-link'><img src='data:image/jpeg;base64,".base64_encode($row['image'])."' alt='Product Image'><span class='name'>" . htmlspecialchars($row['pName']) . "</span></a></td>";
                     echo "<td><span class='price'>$" . number_format($row['price'], 2) . "</span></td>";
+                    $paymentAmount += $row['price'];
                     echo "<td><span class='upload-date'>" . $row['uploadDate'] . "</span></td>";
                     echo "<td><form action='cart.php' method='post'><input name='removeFromCartPID' value='".$row['PID']."' type='hidden'><button type='submit' name='removeFromCart' value='true' class='remove-from-cart'>從我的購物車移除</button></form></td>";
                     echo "</tr>";
                 }
+                echo "<tr><td colspan='4' class='total-line'>總金額: $" . number_format($paymentAmount, 2) . "</td></tr>";
             ?>
         </table>
-
-        <nav>
-            <ul class="pagination">
-                <?php
-                // for ($page = 1; $page <= $numPages; $page++) {
-                //     echo '<li class="page-item"><a class="page-link" href="?page=' . $page . '">' . $page . '</a></li>';
-                // }
-                ?>
-            </ul>
-        </nav>
+        <form action='checkout.php' method='post'>
+            <button type='submit' class='checkout-button'>前往結帳</button>
+        </form>
     </div>
     </div>
     <!-- Header End -->
