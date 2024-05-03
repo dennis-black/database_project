@@ -216,11 +216,15 @@
         if (!isset($_SESSION['username'])) {
             echo "<script>alert('偵測到未登入'); window.location.href = 'login.php';</script>";
             exit(); 
+        } else if ($_SESSION['role'] != "user") {
+            echo "<script>alert('管理員無權訪問'); window.history.back();</script>";
+            exit();
         }
+
         include "database_connection.php";
 
         
-        $recordsPerPage = 20;
+        $recordsPerPage = 10;
         $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         $offset = ($page - 1) * $recordsPerPage;
 
@@ -350,7 +354,7 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarCollapse">
             <div class="navbar-nav ms-auto p-4 p-lg-0">
-                <a href="organs.php" class="nav-item nav-link active">前往賣場</a>
+                <a href="organs.php" class="nav-item nav-link active">前往保鮮盒</a>
                 <a href="listOrgans.php" class="nav-item nav-link active">我的上架列表</a>
                 <a href="cart.php" class="nav-item nav-link active">我的購物車</a>
                 <a href="myAccount.php" class="nav-item nav-link active"><?php echo "歡迎，". $_SESSION['userRealName'];?></a>

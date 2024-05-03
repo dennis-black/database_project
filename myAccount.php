@@ -148,11 +148,24 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarCollapse">
             <div class="navbar-nav ms-auto p-4 p-lg-0">
-                <a href="organs.php" class="nav-item nav-link active">前往賣場</a>
-                <a href="listOrgans.php" class="nav-item nav-link active">我的上架列表</a>
-                <a href="cart.php" class="nav-item nav-link active">我的購物車</a>
-                <a href="myAccount.php" class="nav-item nav-link active"><?php echo "歡迎，". $_SESSION['userRealName'];?></a>
-                <!-- <a href="aboutUs" class="nav-item nav-link">關於我們</a> -->
+                <?php
+                    if($_SESSION['role'] == "admin"){
+                        echo '<a href="manageAccounts.php" class="nav-item nav-link active">管理使用者</a>
+                        <a href="manageShelf.php" class="nav-item nav-link active">管理貨架</a>
+                        <a href="myAccount.php" class="nav-item nav-link active">';
+                         echo "歡迎，". $_SESSION['userRealName'] ."</a>";
+                    }
+                ?>
+                <?php
+                    if($_SESSION['role'] == "user"){
+                        echo '<a href="organs.php" class="nav-item nav-link active">前往保鮮盒</a>
+                        <a href="listOrgans.php" class="nav-item nav-link active">我的上架列表</a>
+                        <a href="cart.php" class="nav-item nav-link active">我的購物車</a>
+                        <a href="myAccount.php" class="nav-item nav-link active">';
+                        echo "歡迎，". $_SESSION['userRealName'] ."</a>";
+                    }
+                
+                ?>
             </div>
             <a href="logout.php" class="btn btn-primary rounded-0 py-4 px-lg-5 d-none d-lg-block">登出<i class="fa fa-arrow-right ms-3"></i></a>
         </div>

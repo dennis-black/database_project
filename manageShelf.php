@@ -3,7 +3,7 @@
 ?>
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<head>    
     <meta charset="utf-8">
     <title>丹尼斯的保鮮盒</title>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
@@ -139,11 +139,11 @@
         .pagination .page-link:hover {
             background-color: #b9d1f8;
         }
-        .remove-from-cart {
+        .add-to-cart {
             padding: 10px 20px;
             font-size: 1rem;
             color: white;
-            background: linear-gradient(145deg, #CE0000, #FF2D2D);
+            background: linear-gradient(145deg, #006bff, #0056b3);
             border: none;
             border-radius: 6px;
             cursor: pointer;
@@ -151,12 +151,12 @@
             box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
         }
 
-        .remove-from-cart:hover {
-            background: linear-gradient(145deg, #FF9797, #FF9797);
+        .add-to-cart:hover {
+            background: linear-gradient(145deg, #0056b3, #0041a8);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.24);
         }
 
-        .remove-from-cart:active {
+        .add-to-cart:active {
             background: #0041a8;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
         }
@@ -216,11 +216,10 @@
         if (!isset($_SESSION['username'])) {
             echo "<script>alert('偵測到未登入'); window.location.href = 'login.php';</script>";
             exit(); 
-        } else if ($_SESSION['role'] != "user") {
-            echo "<script>alert('管理員無權訪問'); window.history.back();</script>";
+        } else if ($_SESSION['role'] != "admin") {
+            echo "<script>alert('無權訪問，請重新登入'); window.location.href = 'logout.php';</script>";
             exit();
         }
-
 
         include "database_connection.php";
 
@@ -236,40 +235,78 @@
         $searchTerm = $_GET['search'] ?? '';
 
         
-        // $sql = "SELECT * FROM product WHERE 1=1";
-        $sql = "SELECT * FROM product t1
-                JOIN cart t2 ON t1.PID = t2.PID
-                WHERE t2.ID = :ID";
-        $countSql = "SELECT COUNT(*) FROM product t1
-                    JOIN cart t2 ON t1.PID = t2.PID
-                    WHERE t2.ID = :ID";
+        $sql = "SELECT * FROM product WHERE 1=1";
+
+        
+        if (!empty($searchTerm)) {
+            $sql .= " AND pName LIKE :searchTerm";
+        }
+
+        
+        if (!empty($sortCategory)) {
+            $sql .= " AND type = :sortCategory";
+        }
+
+        
+        $orderClause = [];
+        if ($sortTime == 'newest') {
+            $orderClause[] = "uploadDate DESC";
+        } elseif ($sortTime == 'oldest') {
+            $orderClause[] = "uploadDate ASC";
+        }
+        if ($sortPrice == 'highest') {
+            $orderClause[] = "price DESC";
+        } elseif ($sortPrice == 'lowest') {
+            $orderClause[] = "price ASC";
+        }
+        if (!empty($orderClause)) {
+            $sql .= " ORDER BY " . implode(', ', $orderClause);
+        }
+
+        
+        $sql .= " LIMIT :offset, :recordsPerPage";
 
         $stmt = $db->prepare($sql);
-        $stmt -> bindParam(':ID', $_SESSION['user_id']);
+        if (!empty($searchTerm)) {
+            $searchTerm = "%" . $searchTerm . "%";
+            $stmt->bindParam(':searchTerm', $searchTerm, PDO::PARAM_STR);
+        }
+        if (!empty($sortCategory)) {
+            $stmt->bindParam(':sortCategory', $sortCategory, PDO::PARAM_STR);
+        }
+        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        $stmt->bindParam(':recordsPerPage', $recordsPerPage, PDO::PARAM_INT);
         $stmt->execute();
+
+      
+        $countSql = "SELECT COUNT(*) FROM product WHERE 1=1";
         
         $countStmt = $db->prepare($countSql);
-        $countStmt -> bindParam(':ID', $_SESSION['user_id']);
+ 
         $countStmt->execute();
         $totalRecords = $countStmt->fetchColumn();
         $numPages = ceil($totalRecords / $recordsPerPage);
     ?>
     <?php
-        if (($_SERVER['REQUEST_METHOD'] === "POST")&&($_POST['removeFromCart'])){
-            $checkCartExists = $db->prepare("SELECT COUNT(*) FROM cart WHERE (PID = :PID AND ID = :ID)");
-            $checkCartExists -> bindParam(':PID', $_POST['removeFromCartPID']);
-            $checkCartExists -> bindParam(':ID', $_SESSION['user_id']);
+        if (($_SERVER['REQUEST_METHOD'] === "POST")&&($_POST['removeFromShelf'])){
+            $checkCartExists = $db->prepare("SELECT COUNT(*) FROM `product` WHERE PID = :PID");
+            $checkCartExists -> bindParam(':PID', $_POST['removeFromShelfPID']);
             $checkCartExists -> execute();
-            if($checkCartExists->fetchColumn() > 0) { //若找到可刪除的資料
-                $stmt = $db->prepare("DELETE FROM cart WHERE (ID = :userID AND PID = :PID)");
-                $stmt -> bindParam(':userID', $_SESSION['user_id']);
-                $stmt -> bindParam(':PID', $_POST['removeFromCartPID']);
-                $stmt->execute();
-                echo "<script>alert('已從購物車中移除該項目');</script>";
-                echo '<script>window.location.href="cart.php";</script>';
-            } else {
-                echo "<script>alert('未找到可刪除的內容');</script>";
-                echo '<script>window.location.href="cart.php";</script>';
+            if($checkCartExists->fetchColumn() > 0) {
+                $stmt = $db->prepare("DELETE FROM `product` WHERE PID = :PID");
+                $stmt -> bindParam(':PID', $_POST['removeFromShelfPID']);
+                $stmt -> execute();
+
+                $cartStmt = $db->prepare("DELETE FROM `cart` WHERE PID = :PID");
+                $cartStmt -> bindParam(':PID', $_POST['removeFromShelfPID']);
+                $cartStmt -> execute();
+
+                ob_end_flush();
+                echo "<script>alert('已刪除該物品');</script>";
+                echo '<script>window.location.href="manageShelf.php";</script>';
+            } else {                
+                echo "<script>alert('未找到欲刪除的物品');</script>";
+                echo '<script>window.location.href="manageShelf.php";</script>';
             }
         }
     ?>
@@ -319,9 +356,8 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarCollapse">
             <div class="navbar-nav ms-auto p-4 p-lg-0">
-                <a href="organs.php" class="nav-item nav-link active">前往保鮮盒</a>
-                <a href="listOrgans.php" class="nav-item nav-link active">我的上架列表</a>
-                <a href="cart.php" class="nav-item nav-link active">我的購物車</a>
+            <a href="manageAccounts.php" class="nav-item nav-link active">管理使用者</a>
+                <a href="manageShelf.php" class="nav-item nav-link active">管理貨架</a>
                 <a href="myAccount.php" class="nav-item nav-link active"><?php echo "歡迎，". $_SESSION['userRealName'];?></a>
                 <!-- <a href="aboutUs" class="nav-item nav-link">關於我們</a> -->
             </div>
@@ -334,8 +370,8 @@
     <!-- Header Start -->
     <div class="bg-light rounded h-100 d-flex align-items-center p-5">
     <div class="container_list">
-        <h3>我的購物車</h3>
-        <!-- <form action="organs.php" method="GET">
+        <h3>賣場貨架管理-管理員介面</h3>
+        <form action="manageShelf.php" method="GET">
             <div class="sort-bar">
                 <select name="sort-time" id="sort-time">
                     <option value="newest">最新</option>
@@ -353,23 +389,9 @@
                 <input name="search" placeholder="輸入你想要搜尋的內容">
                 <input type="submit" value="搜尋">
             </div>
-        </form> -->
+        </form>
         <ul class="product-list">
             <?php
-                // echo "<table><tr><th>名稱</th><th>價格</th><th>上架時間</th><th></th></tr>";
-                // while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                //     echo '<li class="product">';
-                //     echo '<img src="data:image/jpeg;base64,'.base64_encode($row['image']).'" alt="Product Image">';
-                //     echo '<div class="product-info">';
-                //     echo '<span class="name">' . htmlspecialchars($row['pName']) . '</span>';
-                //     echo '<span class="price">$' . number_format($row['price'], 2) . '</span>';
-                //     echo '<span class="upload-date">' . $row['uploadDate'] . '</span>';
-                //     echo "<form action='cart.php' method='post'><input name='removeFromCartPID' value=".$row['PID']." type='hidden'>";
-                //     echo '<button type="submit" name="removeFromCart" value="true" class="remove-from-cart">從我的購物車移除</button></form>';
-                //     echo '</div>';
-                //     echo '</li>';
-                // }
-
                 echo "<table><tr><th>名稱</th><th>價格</th><th>上架時間</th><th></th></tr>";
                 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                     echo "<tr>";
@@ -379,8 +401,8 @@
                     echo '<span class="name">' . htmlspecialchars($row['pName']) . '</span></td>';
                     echo '<td><span class="price">$' . number_format($row['price'], 2) . '</span></td>';
                     echo '<td><span class="upload-date">' . $row['uploadDate'] . '</span></td>';
-                    echo "<td><form action='cart.php' method='post'><input name='removeFromCartPID' value=".$row['PID']." type='hidden'>";
-                    echo '<button type="submit" name="removeFromCart" value="true" class="remove-from-cart">從我的購物車移除</button></form>';
+                    echo "<td><form action='manageShelf.php' method='post'><input name='removeFromShelfPID' value=".$row['PID']." type='hidden'>";
+                    echo '<button type="submit" name="removeFromShelf" value="true" class="add-to-cart">刪除物品</button></form>';
                     echo '</div>';
                     echo '</li>';
                     echo '</td></tr>';
@@ -391,9 +413,9 @@
         <nav>
             <ul class="pagination">
                 <?php
-                for ($page = 1; $page <= $numPages; $page++) {
-                    echo '<li class="page-item"><a class="page-link" href="?page=' . $page . '">' . $page . '</a></li>';
-                }
+                    for ($page = 1; $page <= $numPages; $page++) {
+                        echo '<li class="page-item"><a class="page-link" href="?page=' . $page . '">' . $page . '</a></li>';
+                    }
                 ?>
             </ul>
         </nav>

@@ -39,7 +39,7 @@
             echo "<script>alert('偵測到未登入'); window.location.href = 'login.php';</script>";
             exit();
         } else if ($_SESSION['role'] != "admin") {
-            echo "<script>alert('無權訪問'); window.location.href = 'logout.php';</script>";
+            echo "<script>alert('無權訪問，請重新登入'); window.location.href = 'logout.php';</script>";
             exit();
         }
         
@@ -161,7 +161,7 @@
 
     <!-- Navbar Start -->
     <nav class="navbar navbar-expand-lg bg-white navbar-light sticky-top p-0 wow fadeIn" data-wow-delay="0.1s">
-        <a href="organs.php" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
+        <a href="manageAccounts.php" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
             <h1 class="m-0 text-primary"><i class="far fa-hospital me-3"></i>丹尼斯的保鮮盒</h1>
         </a>
         <button type="button" class="navbar-toggler me-4" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
@@ -169,6 +169,8 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarCollapse">
             <div class="navbar-nav ms-auto p-4 p-lg-0">
+                <a href="manageAccounts.php" class="nav-item nav-link active">管理使用者</a>
+                <a href="manageShelf.php" class="nav-item nav-link active">管理貨架</a>
                 <a href="myAccount.php" class="nav-item nav-link active"><?php echo "歡迎，". $_SESSION['userRealName'];?></a>
                 <!-- <a href="aboutUs" class="nav-item nav-link">關於我們</a> -->
             </div>
@@ -224,10 +226,19 @@
         if (($_SERVER['REQUEST_METHOD'] === "POST")&&($_POST['removeUserFlag'])){
             include "database_connection.php";
             $deleteUserID = $_POST['deleteID'];
-            $stmt = $db -> prepare("DELETE FROM `users` WHERE ID = :deleteID");
+            $stmt = $db -> prepare("DELETE FROM `users` WHERE ID = :deleteID"); //Remove user from users table
             $stmt->bindParam(':deleteID', $deleteUserID);
             $stmt->execute();
-            header("location: manageAccounts.php");
+
+            $removeFromCart = $db -> prepare("DELETE FROM `cart` WHERE ID = :deleteID"); //Remove user-related ID from cart table
+            $removeFromCart->bindParam(':deleteID', $deleteUserID);
+            $removeFromCart->execute();
+
+            $removeFromProduct = $db -> prepare("DELETE FROM `product` WHERE ownerID = :deleteID"); //Remove user-related ownerID from Product table
+            $removeFromProduct->bindParam(':deleteID', $deleteUserID);
+            $removeFromProduct->execute();
+            echo "<script>alert('已刪除使用者相關所有資料'); window.location.href='manageAccounts.php';</script>";
+            exit;
         }
     ?>
 

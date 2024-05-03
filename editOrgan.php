@@ -90,51 +90,57 @@
         if (!isset($_SESSION['username'])) {
             echo "<script>alert('偵測到未登入'); window.location.href = 'login.php';</script>";
             exit(); 
+        } else if ($_SESSION['role'] != "user") {
+            echo "<script>alert('管理員無權訪問'); window.history.back();</script>";
+            exit();
         }
 
+        include "database_connection.php";
+        $original = $db->prepare("SELECT * FROM product WHERE (PID = :PID AND ownerID = :userID)");
+        $original->bindParam(':PID', $_GET['PID']);
+        $original->bindParam(':userID', $_SESSION['user_id']);
+        $original->execute();
+        $organ = array();
+        $organ = $original->fetch(PDO::FETCH_ASSOC);
+    ?>
+    <?php
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
             include "database_connection.php";
-            
             $pName = $_POST['name'];
             $description = $_POST['description'];
             $price = $_POST['price'];
             $type = $_POST['type'];
-            $image = $_FILES['image'];
             $todayDate = date('Y-m-d H:i:s');
-            
-            if (empty($pName) || empty($price) || $type == "" || $image['error'] !== UPLOAD_ERR_OK) {
-                echo "<script>alert('請填寫所有欄位並選擇一個圖片');</script>";
+
+            if ($_FILES['image']['error'] == UPLOAD_ERR_OK) {
+                // 讀取圖片內容為二進位數據
+                $temp_name = $_FILES['image']['tmp_name'];
+                $imageData = file_get_contents($temp_name);
+
+                // 構建 SQL 更新語句，包含二進位的圖片數據
+                $sql = "UPDATE `product` SET `pName`=:pName, `description`=:decription, `price`=:price, `type`=:showtype, `image`=:imagedata, `uploadDate`=:uploadDate WHERE `PID`=:PID";
+                $stmt = $db->prepare($sql);
+                $stmt->bindParam(':pName', $pName);
+                $stmt->bindParam(':decription', $description);
+                $stmt->bindParam(':price', $price);
+                $stmt->bindParam(':showtype', $type);
+                $stmt->bindParam(':imagedata', $imageData, PDO::PARAM_LOB);
+                $stmt->bindParam(':uploadDate', $todayDate);
+                $stmt->bindParam(':PID', $_GET['PID'], PDO::PARAM_INT);
             } else {
-                $check = getimagesize($image["tmp_name"]);
-                if ($check !== false) {
-                    $imageContent = file_get_contents($image["tmp_name"]); 
-
-                    if ($imageContent !== false) {
-                        $sql = "INSERT INTO product (pName, ownerID, description, price, type, image, uploadDate) VALUES (?, ?, ?, ?, ?, ?, ?)";
-                        $stmt = $db->prepare($sql);
-                        $stmt->bindParam(1, $pName);
-                        $stmt->bindParam(2, $_SESSION['user_id']);
-                        $stmt->bindParam(3, $description);
-                        $stmt->bindParam(4, $price);
-                        $stmt->bindParam(5, $type);
-                        $stmt->bindParam(6, $imageContent, PDO::PARAM_LOB);
-                        $stmt->bindParam(7, $todayDate);
-
-                        if ($stmt->execute()) {
-                            echo "<script>alert('器官已成功上傳');</script>";
-                        } else {
-                            echo "<script>alert('器官上傳失敗：" . $stmt->errorInfo()[2] . "');</script>";
-                        }
-                    } else {
-                        echo "<script>alert('圖片讀取失敗');</script>";
-                    }
-                } else {
-                    echo "<script>alert('所上傳文件非有效的圖片');</script>";
-                }
+                // 如果沒有新圖片，只更新其他信息
+                $sql = "UPDATE `product` SET `pName`=:pName, `description`=:decription, `price`=:price, `type`=:showtype, `uploadDate`=:uploadDate WHERE `PID`=:PID";
+                $stmt = $db->prepare($sql);
+                $stmt->bindParam(':pName', $pName);
+                $stmt->bindParam(':decription', $description);
+                $stmt->bindParam(':price', $price);
+                $stmt->bindParam(':showtype', $type);
+                $stmt->bindParam(':uploadDate', $todayDate);
+                $stmt->bindParam(':PID', $_GET['PID'], PDO::PARAM_INT);
             }
-            // $db->close();
-        }
-        ?>
+            $stmt->execute();
+        } 
+    ?>
 
 </head>
 
@@ -182,7 +188,7 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarCollapse">
             <div class="navbar-nav ms-auto p-4 p-lg-0">
-                <a href="organs.php" class="nav-item nav-link active">前往賣場</a>
+                <a href="organs.php" class="nav-item nav-link active">前往前往保鮮盒</a>
                 <a href="listOrgans.php" class="nav-item nav-link active">我的上架列表</a>
                 <a href="cart.php" class="nav-item nav-link active">我的購物車</a>
                 <a href="myAccount.php" class="nav-item nav-link active"><?php echo "歡迎，". $_SESSION['userRealName'];?></a>
@@ -196,28 +202,28 @@
 
     <!-- Header Start -->
     <div class="bg-light rounded h-100 d-flex align-items-center p-5">
-        <form action="uploadOrgan.php" method="POST" enctype="multipart/form-data">
-            <h3>上傳你的器官</h3>
+        <form action="editOrgan.php" method="POST" enctype="multipart/form-data">
+            <h3>編輯你的物品</h3>
             <label for="name">輸入名稱:</label>
-            <input type="text" name="name" id="name" required><br><br>
+            <input type="text" name="name" id="name" value="<?php echo $organ['pName']; ?>" required><br><br>
 
             <label for="description">請完成200字以內的敘述:</label>
-            <textarea name="description" id="description"></textarea><br><br>
+            <textarea name="description" id="description"><?php echo $organ['description']; ?></textarea><br><br>
 
             <label for="price">設定價格:</label>
-            <input type="text" name="price" id="price" required><br><br>
+            <input type="text" name="price" id="price" value="<?php echo $organ['price']; ?>" required><br><br>
 
             <label for="price">分類:</label>
             <select name="type" class="form-control border-0" >
                 <option value="" selected>請選擇</option>
-                <option value="組織">組織</option>
-                <option value="器官">器官</option>
+                <option value="組織" <?php if($organ['type']=="組織") echo "selected"; ?>>組織</option>
+                <option value="物品" <?php if($organ['type']=="器官") echo "selected"; ?>>器官</option>
+                <option value="軀幹" <?php if($organ['type']=="軀幹") echo "selected"; ?>>軀幹</option>
             </select>
 
-            <label for="image">上傳圖片:</label>
-            <input type="file" name="image" id="image" required><br><br>
-
-            <input type="submit" value="上傳器官">
+            <label for="image">更新圖片:</label>
+            <input type="file" name="image" id="image" ><br><br>
+            <input type="submit" value="更新內容">
         </form>
     </div>
     <!-- Header End -->

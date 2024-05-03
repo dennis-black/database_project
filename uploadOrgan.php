@@ -90,6 +90,9 @@
         if (!isset($_SESSION['username'])) {
             echo "<script>alert('偵測到未登入'); window.location.href = 'login.php';</script>";
             exit(); 
+        } else if ($_SESSION['role'] != "user") {
+            echo "<script>alert('管理員無權訪問'); window.history.back();</script>";
+            exit();
         }
 
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -121,9 +124,9 @@
                         $stmt->bindParam(7, $todayDate);
 
                         if ($stmt->execute()) {
-                            echo "<script>alert('器官已成功上傳');</script>";
+                            echo "<script>alert('物品已成功上傳');</script>";
                         } else {
-                            echo "<script>alert('器官上傳失敗：" . $stmt->errorInfo()[2] . "');</script>";
+                            echo "<script>alert('物品上傳失敗：" . $stmt->errorInfo()[2] . "');</script>";
                         }
                     } else {
                         echo "<script>alert('圖片讀取失敗');</script>";
@@ -182,6 +185,9 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarCollapse">
             <div class="navbar-nav ms-auto p-4 p-lg-0">
+            <a href="organs.php" class="nav-item nav-link active">前往前往保鮮盒</a>
+                <a href="listOrgans.php" class="nav-item nav-link active">我的上架列表</a>
+                <a href="cart.php" class="nav-item nav-link active">我的購物車</a>
                 <a href="myAccount.php" class="nav-item nav-link active"><?php echo "歡迎，". $_SESSION['userRealName'];?></a>
                 <!-- <a href="aboutUs" class="nav-item nav-link">關於我們</a> -->
             </div>
@@ -194,7 +200,7 @@
     <!-- Header Start -->
     <div class="bg-light rounded h-100 d-flex align-items-center p-5">
         <form action="uploadOrgan.php" method="POST" enctype="multipart/form-data">
-            <h3>上傳你的器官</h3>
+            <h3>上傳你的物品</h3>
             <label for="name">輸入名稱:</label>
             <input type="text" name="name" id="name" required><br><br>
 
@@ -214,7 +220,7 @@
             <label for="image">上傳圖片:</label>
             <input type="file" name="image" id="image" required><br><br>
 
-            <input type="submit" value="上傳器官">
+            <input type="submit" value="上傳物品">
         </form>
     </div>
     <!-- Header End -->

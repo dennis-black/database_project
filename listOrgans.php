@@ -239,6 +239,9 @@
         if (!isset($_SESSION['username'])) {
             echo "<script>alert('偵測到未登入'); window.location.href = 'login.php';</script>";
             exit(); 
+        } else if ($_SESSION['role'] != "user") {
+            echo "<script>alert('管理員無權訪問'); window.history.back();</script>";
+            exit();
         }
         include "database_connection.php";
 
@@ -262,11 +265,29 @@
         $numPages = ceil($totalRecords / $recordsPerPage);
     ?>
     <?php
+        if (($_SERVER['REQUEST_METHOD'] === "POST") && ($_POST['edit'])) {
+            $stmt = $db->prepare("SELECT * FROM product WHERE PID = :PID AND ownerID = :userID");
+            $stmt->bindParam(':PID', $_POST['editPID']);
+            $stmt->bindParam(':userID', $_SESSION['user_id']);
+            $stmt->execute();
+            $editPID = $_POST['editPID'];
+            if ($stmt->rowCount() > 0) {
+                echo '<script>window.location.href="editOrgan.php?PID='.$_POST['editPID'].'";</script>';
+                exit;
+            } else {
+                echo "<script>alert('無權訪問');</script>";
+                echo '<script>window.location.href="listOrgans.php";</script>';
+            }
+        }
+
         if (($_SERVER['REQUEST_METHOD'] === "POST")&&($_POST['remove'])){
             $stmt = $db->prepare("DELETE FROM product WHERE PID = :PID");
-            // $stmt -> bindParam(':userID', $_SESSION['user_id']);
             $stmt -> bindParam(':PID', $_POST['removePID']);
             $stmt->execute();
+
+            $cartStmt = $db->prepare("DELETE FROM `cart` WHERE PID = :PID");
+            $cartStmt -> bindParam(':PID', $_POST['removePID']);
+            $cartStmt->execute();
             echo "<script>alert('已從上架中刪除');</script>";
             echo '<script>window.location.href="listOrgans.php";</script>';
         }
@@ -317,8 +338,8 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarCollapse">
             <div class="navbar-nav ms-auto p-4 p-lg-0">
-                <a href="organs.php" class="nav-item nav-link active">前往賣場</a>
-                <a href="listOrgans.php" class="nav-item nav-link active">我的上架列表</a>
+                <a href="organs.php" class="nav-item nav-link active">前往保鮮盒</a>
+                <a href="uploadOrgan.php" class="nav-item nav-link active" style="color: #00BB00;">上傳新物品</a>
                 <a href="cart.php" class="nav-item nav-link active">我的購物車</a>
                 <a href="myAccount.php" class="nav-item nav-link active"><?php echo "歡迎，". $_SESSION['userRealName'];?></a>
                 <!-- <a href="aboutUs" class="nav-item nav-link">關於我們</a> -->
@@ -344,7 +365,7 @@
                     echo '<span class="name">' . htmlspecialchars($row['pName']) . '</span></td>';
                     echo '<td><span class="price">$' . number_format($row['price'], 2) . '</span></td>';
                     echo '<td><span class="upload-date">' . $row['uploadDate'] . '</span></td>';
-                    echo "<td><form action='listOrgans.php'><input name='addToCartPID' value=".$row['PID']." type='hidden'>";
+                    echo "<td><form action='listOrgans.php' method='post'><input name='editPID' value=".$row['PID']." type='hidden'>";
                     echo '<button type="submit" name="edit" value="true" class="add-to-cart">編輯</button></form></td>';
                     echo "<td><form action='listOrgans.php' method='post'><input name='removePID' value=".$row['PID']." type='hidden'>";
                     echo '<button type="submit" name="remove" value="true" class="remove">移除下架</button></form></td>';

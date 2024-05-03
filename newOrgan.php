@@ -110,6 +110,9 @@
         if (!isset($_SESSION['username'])) {
             echo "<script>alert('偵測到未登入'); window.location.href = 'login.php';</script>";
             exit(); 
+        } else if ($_SESSION['role'] != "user") {
+            echo "<script>alert('管理員無權訪問'); window.history.back();</script>";
+            exit();
         }
     ?>
 </head>
@@ -158,7 +161,7 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarCollapse">
             <div class="navbar-nav ms-auto p-4 p-lg-0">
-                <a href="organs.php" class="nav-item nav-link active">前往賣場</a>
+                <a href="organs.php" class="nav-item nav-link active">前往保鮮盒</a>
                 <a href="listOrgans.php" class="nav-item nav-link active">我的上架列表</a>
                 <a href="cart.php" class="nav-item nav-link active">我的購物車</a>
                 <a href="myAccount.php" class="nav-item nav-link active"><?php echo "歡迎，". $_SESSION['userRealName'];?></a>
@@ -186,7 +189,7 @@
                     </select>
                     <select id="sort-category">
                         <option value="">所有分類</option>
-                        <option value="organ">器官</option>
+                        <option value="organ">物品</option>
                         <option value="tissue">組織</option>
                     </select>
                         <input name="search" placeholder="輸入你想要搜尋的內容">
