@@ -3,7 +3,7 @@
 ?>
 <!DOCTYPE html>
 <html lang="en">
-<head>    
+<head>
     <meta charset="utf-8">
     <title>丹尼斯的保鮮盒</title>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
@@ -139,11 +139,11 @@
         .pagination .page-link:hover {
             background-color: #b9d1f8;
         }
-        .add-to-cart {
+        .remove-from-cart {
             padding: 10px 20px;
             font-size: 1rem;
             color: white;
-            background: linear-gradient(145deg, #006bff, #0056b3);
+            background: linear-gradient(145deg, #CE0000, #FF2D2D);
             border: none;
             border-radius: 6px;
             cursor: pointer;
@@ -151,12 +151,12 @@
             box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
         }
 
-        .add-to-cart:hover {
-            background: linear-gradient(145deg, #0056b3, #0041a8);
+        .remove-from-cart:hover {
+            background: linear-gradient(145deg, #FF9797, #FF9797);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.24);
         }
 
-        .add-to-cart:active {
+        .remove-from-cart:active {
             background: #0041a8;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
         }
@@ -179,7 +179,7 @@
 
         /* 表格行樣式 */
         td {
-            text-align: center; /* 文字居中顯示 */
+            text-align: left; /* 文字居中顯示 */
             padding: 8px; /* 內邊距 */
             font-size: 14px; /* 字體大小 */
         }
@@ -211,29 +211,63 @@
             height: auto; /* 高度自動 */
         }
 
-        .remove {
-            padding: 10px 20px;
-            font-size: 1rem;
+        .product-link {
+            text-decoration: none;
+            color: inherit; /* Ensures the text doesn't change color */
+            display: inline-block; /* Makes the link wrap its content only */
+        }
+
+        .product-link img {
+            vertical-align: middle; /* Aligns the image nicely with the text */
+            margin-right: 10px; /* Adds some space between the image and the text */
+        }
+
+        .product-list th, .product-list td {
+            padding: 10px; /* Adds padding for table cells */
+            border-bottom: 1px solid #ccc; /* Adds a light border to each row */
+        }
+
+        form {
+            background: white;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+
+        div {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #4CAF50;
             color: white;
-            background: linear-gradient(145deg, #CE0000, #FF2D2D);
             border: none;
-            border-radius: 6px;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
+            border-radius: 4px;
         }
 
-        .remove:hover {
-            background: linear-gradient(145deg, #FF9797, #FF9797);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.24);
+        button:hover {
+            background-color: #45a049;
         }
-
-        .remove:active {
-            background: #0041a8;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
-        }
-
-
     </style>
     <?php
         if (!isset($_SESSION['username'])) {
@@ -243,54 +277,21 @@
             echo "<script>alert('管理員無權訪問'); window.history.back();</script>";
             exit();
         }
+
+        $pidsString = "";
+
         include "database_connection.php";
-
         
-        $recordsPerPage = 10;
-        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-        $offset = ($page - 1) * $recordsPerPage;
+        $sql = "SELECT * FROM product t1
+                JOIN cart t2 ON t1.PID = t2.PID
+                WHERE t2.ID = :ID";
 
-        $sql = "SELECT * FROM product WHERE (ownerID = :ownerID AND display = 1)";
         $stmt = $db->prepare($sql);
-        $stmt->bindParam(':ownerID', $_SESSION['user_id']);
+        $stmt -> bindParam(':ID', $_SESSION['user_id']);
         $stmt->execute();
-
-      
-        $countSql = "SELECT COUNT(*) FROM product WHERE (ownerID = :ownerID AND display = 1)";
         
-        $countStmt = $db->prepare($countSql);
-        $countStmt->bindParam(':ownerID', $_SESSION['user_id']);
-        $countStmt->execute();
-        $totalRecords = $countStmt->fetchColumn();
-        $numPages = ceil($totalRecords / $recordsPerPage);
-    ?>
-    <?php
-        if (($_SERVER['REQUEST_METHOD'] === "POST") && ($_POST['edit'])) {
-            $stmt = $db->prepare("SELECT * FROM product WHERE PID = :PID AND ownerID = :userID");
-            $stmt->bindParam(':PID', $_POST['editPID']);
-            $stmt->bindParam(':userID', $_SESSION['user_id']);
-            $stmt->execute();
-            $editPID = $_POST['editPID'];
-            if ($stmt->rowCount() > 0) {
-                echo '<script>window.location.href="editOrgan.php?PID='.$_POST['editPID'].'";</script>';
-                exit;
-            } else {
-                echo "<script>alert('無權訪問');</script>";
-                echo '<script>window.location.href="listOrgans.php";</script>';
-            }
-        }
-
-        if (($_SERVER['REQUEST_METHOD'] === "POST")&&($_POST['remove'])){
-            $stmt = $db->prepare("DELETE FROM product WHERE PID = :PID");
-            $stmt -> bindParam(':PID', $_POST['removePID']);
-            $stmt->execute();
-
-            $cartStmt = $db->prepare("DELETE FROM `cart` WHERE PID = :PID");
-            $cartStmt -> bindParam(':PID', $_POST['removePID']);
-            $cartStmt->execute();
-            echo "<script>alert('已從上架中刪除');</script>";
-            echo '<script>window.location.href="listOrgans.php";</script>';
-        }
+       
+        $arrayPID = [];
     ?>
 </head>
 
@@ -339,10 +340,9 @@
         <div class="collapse navbar-collapse" id="navbarCollapse">
             <div class="navbar-nav ms-auto p-4 p-lg-0">
                 <a href="organs.php" class="nav-item nav-link active">前往保鮮盒</a>
-                <a href="uploadOrgan.php" class="nav-item nav-link active" style="color: #00BB00;">上傳新物品</a>
+                <a href="listOrgans.php" class="nav-item nav-link active">我的上架列表</a>
                 <a href="cart.php" class="nav-item nav-link active">我的購物車</a>
                 <a href="myAccount.php" class="nav-item nav-link active"><?php echo "歡迎，". $_SESSION['userRealName'];?></a>
-                <!-- <a href="aboutUs" class="nav-item nav-link">關於我們</a> -->
             </div>
             <a href="logout.php" class="btn btn-primary rounded-0 py-4 px-lg-5 d-none d-lg-block">登出<i class="fa fa-arrow-right ms-3"></i></a>
         </div>
@@ -353,38 +353,101 @@
     <!-- Header Start -->
     <div class="bg-light rounded h-100 d-flex align-items-center p-5">
     <div class="container_list">
-        <h3>我的上架列表</h3>
-        <ul class="product-list">
-            <?php
-                echo "<table><tr><th>名稱</th><th>價格</th><th>上架時間</th><th></th><th></th></tr>";
+        <h3>付款頁</h3>
+        <table class="product-list">
+            <tr><th>名稱</th><th>價格</th><th>上架時間</th><th></th></tr>
+            <?php   
+                $paymentAmount = 0;
                 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                     echo "<tr>";
-                    echo '<td><li class="product">';
-                    echo '<img src="data:image/jpeg;base64,'.base64_encode($row['image']).'" alt="Product Image">';
-                    echo '<div class="product-info">';
-                    echo '<span class="name">' . htmlspecialchars($row['pName']) . '</span></td>';
-                    echo '<td><span class="price">$' . number_format($row['price'], 2) . '</span></td>';
-                    echo '<td><span class="upload-date">' . $row['uploadDate'] . '</span></td>';
-                    echo "<td><form action='listOrgans.php' method='post'><input name='editPID' value=".$row['PID']." type='hidden'>";
-                    echo '<button type="submit" name="edit" value="true" class="add-to-cart">編輯</button></form></td>';
-                    echo "<td><form action='listOrgans.php' method='post'><input name='removePID' value=".$row['PID']." type='hidden'>";
-                    echo '<button type="submit" name="remove" value="true" class="remove">移除下架</button></form></td>';
-                    echo '</div>';
-                    echo '</li>';
-                    echo '</tr>';
+                    echo "<td><a class='product-link'><img src='data:image/jpeg;base64,".base64_encode($row['image'])."' alt='Product Image'><span class='name'>" . htmlspecialchars($row['pName']) . "</span></a></td>";
+                    echo "<td><span class='price'>$" . number_format($row['price'], 2) . "</span></td>";
+                    $paymentAmount += $row['price'];
+                    $arrayPID[] = $row['PID']; //將產品ID添加到陣列中
+                    echo "<td><span class='upload-date'>" . $row['uploadDate'] . "</span></td>";
+                    echo "</tr>";
                 }
-                echo "</table>";
+                // $pidsString = implode(',', $arrayPID); //使用逗點將產品ID連接成一個字符串
+                echo "<tr><td colspan='4' class='total-line'>總金額: $" . number_format($paymentAmount, 2) . "</td></tr>";
+                // print_r($arrayPID); 
+                // $pidsString = implode(',', $arrayPID);
+                // print_r($pidsString); 
+                // echo "<script>";
+                // echo "var arrayPID = " . json_encode($arrayPID) . ";";
+                // echo "alert(arrayPID.join(', '));";  // This will convert array to comma-separated string for display
+                // echo "</script>";
+
+
+                if ($_SERVER['REQUEST_METHOD'] === "POST"){ //信用卡號碼只要輸入16位數字即判定付款成功，將訂單資訊分別寫入 orders orderDetail payment 這三個資料庫
+                    $todayDate = date('Y-m-d H:i:s');
+                    $sql = "INSERT INTO `orders`(`ID`, `Date`, `payAmount`) VALUES (:ID, :InsertDate, :Amount)";
+                    $insertIntoOrdersStmt = $db -> prepare($sql);
+                    $insertIntoOrdersStmt -> bindParam(':ID', $_SESSION['user_id']);
+                    $insertIntoOrdersStmt -> bindParam(':InsertDate', $todayDate);
+                    $insertIntoOrdersStmt -> bindParam(':Amount', $_POST['total']);
+                    $insertIntoOrdersStmt -> execute();
+        
+        
+                    //在完成資料放入 order 之後用時間查詢該訂單的OID 作為操作  orderDetail payment 這兩個資料表的主鍵
+                    // $sql = "SELECT * FROM `orders` WHERE `Date` = :date";
+                    // $checkOID = $db -> prepare($sql);
+                    // $checkOID -> bindParam(':date', $todayDate);
+                    // $checkOID -> execute();
+                    // $OIDresult = $checkOID->fetch(PDO::FETCH_ASSOC);
+                    // $OID = $OIDresult['OID']; //成功取得訂單ID(OID)
+                    $OID = $db->lastInsertId();
+        
+                    // $sql = "INSERT INTO `orderDetail`(`OID`, `PIDlist`) VALUES (:OID, :PIDlist)";
+                    // $insertIntoDetail = $db -> prepare($sql);
+                    // $insertIntoDetail -> bindParam(':OID', $OID);
+                    // $insertIntoDetail -> bindParam(':PIDlist', $pidsString);
+                    // $insertIntoDetail -> execute();
+    
+                    $sql = "INSERT INTO `payment`(`OID`, `paymentAmount`, `payMethod`) VALUES (:OID, :paymentAmount, :payMethod)";
+                    $payMethod = "creditCard";
+                    $insertIntoPayment = $db -> prepare($sql);
+                    $insertIntoPayment -> bindParam(':OID', $OID);
+                    $insertIntoPayment -> bindParam(':paymentAmount', $_POST['total']);
+                    $insertIntoPayment -> bindParam(':payMethod', $payMethod);
+                    $insertIntoPayment -> execute(); 
+        
+                    $sql = "DELETE FROM `cart` WHERE `ID` = :ID";
+                    $deleteFromCartStmt = $db -> prepare($sql);
+                    $deleteFromCartStmt -> bindParam(':ID', $_SESSION['user_id']);
+                    $deleteFromCartStmt -> execute();
+        
+                    $pidsString = implode(',', $arrayPID);
+                    $sql = "INSERT INTO `orderDetail` (`OID`, `PIDlist`) VALUES (:orderID, :productIDs)";
+                    $stmt = $db->prepare($sql);
+                    $stmt->bindParam(':orderID', $OID);
+                    $stmt->bindParam(':productIDs', $pidsString);
+                    $stmt->execute();
+
+                    $pidsArray = explode(',', $pidsString);
+                    $placeholders = implode(', ', array_fill(0, count($pidsArray), '?'));
+                    $sql = "UPDATE `product` SET `display` = 0 WHERE `PID` IN ($placeholders)";
+                    $noDisplayStmt = $db -> prepare($sql);
+                    $noDisplayStmt -> execute($pidsArray);
+
+                    $sql = "DELETE FROM `cart` WHERE `PID` IN ($placeholders)";
+                    $deleteFromOtherUserCartStmt = $db -> prepare($sql);
+                    $deleteFromOtherUserCartStmt->execute($pidsArray);
+        
+                    echo "<script>alert('已完成付款');</script>";
+                    echo '<script>window.location.href="cart.php";</script>';
+                }
             ?>
-        </ul>
-        <nav>
-            <ul class="pagination">
-                <?php
-                    for ($page = 1; $page <= $numPages; $page++) {
-                        echo '<li class="page-item"><a class="page-link" href="?page=' . $page . '">' . $page . '</a></li>';
-                    }
-                ?>
-            </ul>
-        </nav>
+        </table>
+        <form id="paymentForm" action="checkout.php" method="post">
+            <div>
+                <label for="cardNumber">信用卡號碼(該欄位不會被送到後端進行處理，請寫滿16位數字):</label>
+                <input type="text" id="cardNumber" name="cardNumber" maxlength="19" placeholder="請輸入信用卡號碼" required>
+            </div>
+            <div>
+                <input type="hidden" value="<?php echo $paymentAmount;?>" name="total">
+                <button type="submit">確認付款</button>
+            </div>
+        </form>
     </div>
     </div>
     <!-- Header End -->
@@ -438,6 +501,34 @@
 
     <!-- Template Javascript -->
     <script src="js/main.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const inputField = document.getElementById("cardNumber");
+
+            // 在每輸入4個數字後添加一個空格
+            inputField.addEventListener("input", function() {
+                let value = inputField.value.replace(/\s+/g, ""); // 移除空格以重新計算
+                let newValue = "";
+                for (let i = 0; i < value.length; i++) {
+                    if (i > 0 && i % 4 === 0) {
+                        newValue += " "; // 每4位添加空格
+                    }
+                    newValue += value[i];
+                }
+                inputField.value = newValue;
+            });
+
+            // 表單提交時驗證卡號長度
+            const form = document.getElementById("paymentForm");
+            form.addEventListener("submit", function(event) {
+                const cardNumber = inputField.value.replace(/\s+/g, ""); // 移除空格以取得實際的卡號
+                if (cardNumber.length !== 16) {
+                    alert("信用卡號必須是16位數字！");
+                    event.preventDefault(); // 阻止表單提交
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>

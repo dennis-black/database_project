@@ -247,7 +247,7 @@
         $searchTerm = $_GET['search'] ?? '';
 
         
-        $sql = "SELECT * FROM product WHERE 1=1";
+        $sql = "SELECT * FROM `product` WHERE `display` = 1";
 
         
         if (!empty($searchTerm)) {
@@ -291,7 +291,7 @@
         $stmt->execute();
 
       
-        $countSql = "SELECT COUNT(*) FROM product WHERE 1=1";
+        $countSql = "SELECT COUNT(*) FROM `product` WHERE `display` = 1";
         
         $countStmt = $db->prepare($countSql);
  

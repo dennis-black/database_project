@@ -291,7 +291,7 @@
         // $sql = "SELECT * FROM product WHERE 1=1";
         $sql = "SELECT * FROM product t1
                 JOIN cart t2 ON t1.PID = t2.PID
-                WHERE t2.ID = :ID";
+                WHERE (t2.ID = :ID AND t1.display = 1)";
         // $countSql = "SELECT COUNT(*) FROM product t1
         //             JOIN cart t2 ON t1.PID = t2.PID
         //             WHERE t2.ID = :ID";
@@ -402,8 +402,8 @@
                 echo "<tr><td colspan='4' class='total-line'>總金額: $" . number_format($paymentAmount, 2) . "</td></tr>";
             ?>
         </table>
-        <form action='checkout.php' method='post'>
-            <button type='submit' class='checkout-button'>前往結帳</button>
+        <form action="checkout.php">
+            <?php if($stmt->rowCount() >= 1)  echo "<button type='submit' class='checkout-button'>前往結帳</button>";?>
         </form>
     </div>
     </div>
