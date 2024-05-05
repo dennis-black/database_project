@@ -143,7 +143,7 @@
             padding: 10px 20px;
             font-size: 1rem;
             color: white;
-            background: linear-gradient(145deg, #006bff, #0056b3);
+            background: linear-gradient(145deg, #FF2D2D, #FF2D2D);
             border: none;
             border-radius: 6px;
             cursor: pointer;
@@ -152,7 +152,7 @@
         }
 
         .add-to-cart:hover {
-            background: linear-gradient(145deg, #0056b3, #0041a8);
+            background: linear-gradient(145deg, #FF2D2D, #FF2D2D);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.24);
         }
 
@@ -202,7 +202,7 @@
 
         /* 鼠標懸停在按鈕上時的效果 */
         button:hover {
-            background-color: #0056b3; /* 按鈕深藍色 */
+            background-color: #FF2D2D; /* 按鈕深藍色 */
         }
 
         /* 產品圖片樣式 */
@@ -235,7 +235,7 @@
         $searchTerm = $_GET['search'] ?? '';
 
         
-        $sql = "SELECT * FROM product WHERE 1=1";
+        $sql = "SELECT * FROM `product` WHERE `display` = 1";
 
         
         if (!empty($searchTerm)) {
@@ -279,7 +279,7 @@
         $stmt->execute();
 
       
-        $countSql = "SELECT COUNT(*) FROM product WHERE 1=1";
+        $countSql = "SELECT COUNT(*) FROM `product` WHERE `display` = 1";
         
         $countStmt = $db->prepare($countSql);
  
@@ -322,30 +322,6 @@
     <!-- Spinner End -->
 
 
-    <!-- Topbar Start -->
-    <div class="container-fluid bg-light p-0 wow fadeIn" data-wow-delay="0.1s">
-        <div class="row gx-0 d-none d-lg-flex">
-            <div class="col-lg-7 px-5 text-start">
-                <div class="h-100 d-inline-flex align-items-center py-3 me-4">
-                    <small class="fa fa-map-marker-alt text-primary me-2"></small>
-                    <small>阿拉伯聯合大公國阿布達比國際金融中心-科里弗蘭診所</small>
-                </div>
-                <div class="h-100 d-inline-flex align-items-center py-3">
-                    <small class="far fa-clock text-primary me-2"></small>
-                    <small>Mon - Fri : 09.00 AM - 09.00 PM</small>
-                </div>
-            </div>
-            <div class="col-lg-5 px-5 text-end">
-                <div class="h-100 d-inline-flex align-items-center py-3 me-4">
-                    <small class="fa fa-phone-alt text-primary me-2"></small>
-                    <small>+012 345 6789</small>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Topbar End -->
-
-
     <!-- Navbar Start -->
     <nav class="navbar navbar-expand-lg bg-white navbar-light sticky-top p-0 wow fadeIn" data-wow-delay="0.1s">
         <a href="organs.php" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
@@ -358,6 +334,7 @@
             <div class="navbar-nav ms-auto p-4 p-lg-0">
             <a href="manageAccounts.php" class="nav-item nav-link active">管理使用者</a>
                 <a href="manageShelf.php" class="nav-item nav-link active">管理貨架</a>
+                <a href="manageOrders.php" class="nav-item nav-link active">管理訂單</a>
                 <a href="myAccount.php" class="nav-item nav-link active"><?php echo "歡迎，". $_SESSION['userRealName'];?></a>
                 <!-- <a href="aboutUs" class="nav-item nav-link">關於我們</a> -->
             </div>

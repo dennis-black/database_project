@@ -45,27 +45,9 @@
         
         // 處理管理員調出使用者清單
         include "database_connection.php";
-        // $stmt = $db->prepare("SELECT * FROM `users`");
-        // $stmt->execute();
-        
-        // $html = "<table><tr><th>ID</th><th>身分組</th><th>使用者姓名</th><th>使用者名稱</th><th>血型</th><th>生日</th><th>電話</th><th>電子郵件</th></tr>";
-        // while ($user = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        //     $html .= "<tr>";
-        //     $html .= "<td>" . htmlspecialchars($user['ID']) . "</td>";
-        //     $html .= "<td>" . htmlspecialchars($user['role']) . "</td>";
-        //     $html .= "<td>" . htmlspecialchars($user['userRealName']) . "</td>";
-        //     $html .= "<td>" . htmlspecialchars($user['username']) . "</td>";
-        //     $html .= "<td>" . htmlspecialchars($user['bloodType']) . "</td>";
-        //     $html .= "<td>" . htmlspecialchars($user['birthday']) . "</td>";
-        //     $html .= "<td>" . htmlspecialchars($user['phoneNumber']) . "</td>";
-        //     $html .= "<td>" . htmlspecialchars($user['email']) . "</td>";
-            // $html .= "<td><form action=\"manageAccounts.php\" method=\"post\" onsubmit=\"return confirmDelete();\">". ((($user['role'] === "admin")||($user['role'] === "root")) ? "" : "<input type=\"hidden\" name=\"deleteID\" value=\"".$user['ID']."\"><button type=\"submit\" style=\"background-color: #ff4d4d; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; transition: background 0.3s ease;\">刪除使用者</button></form></td>");
-        //     $html .= "</tr>";
-        // }
-        // $html .= "</table>";
         $records_per_page = 10;
 
-        $stmt = $db->prepare("SELECT COUNT(*) FROM `users`");
+        $stmt = $db->prepare("SELECT COUNT(*) FROM `orders`");
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_NUM);
         $total_records = $row[0];
@@ -80,7 +62,16 @@
 
         $start_from = ($current_page - 1) * $records_per_page;
 
-        $stmt = $db->prepare("SELECT * FROM `users` LIMIT :start_from, :records_per_page");
+
+        $sql = "SELECT o.OID, o.ID, o.Date, o.payAmount, od.PIDlist, p.paymentAmount, p.payMethod, u.username, u.ID
+                FROM orders o
+                JOIN orderDetail od ON o.OID = od.OID
+                JOIN payment p ON o.OID = p.OID
+                JOIN users u ON o.ID = u.ID
+                WHERE 1
+                LIMIT :start_from, :records_per_page";
+        $stmt = $db->prepare($sql);
+        // $stmt->bindParam(':OID', $orderID);
         $stmt->bindParam(':start_from', $start_from, PDO::PARAM_INT);
         $stmt->bindParam(':records_per_page', $records_per_page, PDO::PARAM_INT);
         $stmt->execute();
@@ -135,6 +126,7 @@
     <!-- Spinner End -->
 
 
+
     <!-- Navbar Start -->
     <nav class="navbar navbar-expand-lg bg-white navbar-light sticky-top p-0 wow fadeIn" data-wow-delay="0.1s">
         <a href="manageAccounts.php" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
@@ -162,28 +154,26 @@
         
     </div>
     <!-- Header End -->
-
+    <h3>管理訂單-管理員介面</h3></br>
     <div class="bg-light rounded h-100 d-flex align-items-center p-5">
+        
         <?php
             echo "<table>";
-            echo "<tr><th>ID</th><th>身分組</th><th>使用者姓名</th><th>使用者名稱</th><th>血型</th><th>生日</th><th>電話</th><th>電子郵件</th></tr>";
-            while ($user = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                echo "<tr><td>" . htmlspecialchars($user['ID']) . "</td><td>" . htmlspecialchars($user['role']) . "</td><td>" . htmlspecialchars($user['userRealName']) . "</td><td>" . htmlspecialchars($user['username']) . "</td><td>" . htmlspecialchars($user['bloodType']) . "</td><td>" . htmlspecialchars($user['birthday']) . "</td><td>" . htmlspecialchars($user['phoneNumber']) . "</td><td>" . htmlspecialchars($user['email']) . "</td>";
-                echo "<td>".((($user['role'] === "admin")||($user['role'] === "root")) ? "</td>" : "<form action=\"manageAccounts.php\" method=\"post\" onsubmit=\"return confirmDelete();\"><input type=\"hidden\" name=\"deleteID\" value=\"".$user['ID']."\"><button type=\"submit\" name=\"removeUserFlag\" value=\"true\" style=\"background-color: #ff4d4d; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; transition: background 0.3s ease;\">刪除使用者</button></form></td>");
-                echo "<td><form action=\"manageAccounts.php\" method=\"post\" onsubmit=\"return confirmDelete();\"><input type=\"hidden\" name=\"resetPasswordID\" value=\"".$user['ID']."\"><button type=\"submit\" name=\"resetFlag\" value=\"true\" style=\"background-color: #0080FF; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; transition: background 0.3s ease;\">重設密碼</button></form></td>";
+            echo "<tr><th>訂單OID</th><th>使用者名稱</th><th>日期</th><th>訂單金額</th><th>支付金額</th><th>支付方式</th></tr>";
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                echo "<tr>";
+                echo "<td>" . htmlspecialchars($row['OID']) . "</td>";
+                echo "<td>" . htmlspecialchars($row['username']) . "</td>";
+                echo "<td>" . htmlspecialchars($row['Date']) . "</td>";
+                // echo "<td>" . htmlspecialchars($row['PIDlist']) . "</td>";
+                echo "<td>" . htmlspecialchars($row['payAmount']) . "</td>";
+                echo "<td>" . htmlspecialchars($row['paymentAmount']) . "</td>";
+                echo "<td>" . htmlspecialchars($row['payMethod']) . "</td>";
+                echo "<td><form action=\"manageOrders.php\" method=\"post\" ><input type=\"hidden\" name=\"OIDDetail\" value=\"".$row['OID']."\"><button type=\"submit\" name=\"inspectOID\" value=\"true\" style=\"background-color: #0080FF; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; transition: background 0.3s ease;\">檢視詳細內容</button></form></td>";
+                echo "<td><form action=\"manageOrders.php\" method=\"post\" onsubmit=\"return confirmDelete();\"><input type=\"hidden\" name=\"deleteOID\" value=\"".$row['OID']."\"><button type=\"submit\" name=\"removeOrderRecord\" value=\"true\" style=\"background-color: #ff4d4d; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; transition: background 0.3s ease;\">刪除該紀錄</button></form></td>";
                 echo "</tr>";
             }
             echo "</table>";
-
-            // echo "<div class='pagination'>";
-            // for ($i = 1; $i <= $total_pages; $i++) {
-            //     if ($i == $current_page) {
-            //         echo "<a href='#' class='active'>$i</a>";
-            //     } else {
-            //         echo "<a href='manageAccounts.php?page=".$i."'>$i</a>";
-            //     }
-            // }
-            // echo "</div>";
         ?>
     </div>
     <div class="bg-light rounded h-100 d-flex align-items-center p-5">
@@ -200,41 +190,29 @@
         ?>
     </div>
     <?php
-        if (($_SERVER['REQUEST_METHOD'] === "POST")&&($_POST['removeUserFlag'])){
+        if (($_SERVER['REQUEST_METHOD'] === "POST")&&($_POST['removeOrderRecord'])){
             include "database_connection.php";
-            $deleteUserID = $_POST['deleteID'];
-            $stmt = $db -> prepare("DELETE FROM `users` WHERE ID = :deleteID"); //Remove user from users table
-            $stmt->bindParam(':deleteID', $deleteUserID);
+            $deleteOID = $_POST['deleteOID'];
+            $stmt = $db -> prepare("DELETE FROM `orders` WHERE `OID` = :deleteOID");
+            $stmt->bindParam(':deleteOID', $deleteOID);
             $stmt->execute();
 
-            $removeFromCart = $db -> prepare("DELETE FROM `cart` WHERE ID = :deleteID"); //Remove user-related ID from cart table
-            $removeFromCart->bindParam(':deleteID', $deleteUserID);
-            $removeFromCart->execute();
+            $stmt2 = $db -> prepare("DELETE FROM `orderDetail` WHERE `OID` = :deleteOID"); 
+            $stmt2 -> bindParam(':deleteOID', $deleteOID);
+            $stmt2 -> execute();
 
-            $removeFromProduct = $db -> prepare("DELETE FROM `product` WHERE ownerID = :deleteID"); //Remove user-related ownerID from Product table
-            $removeFromProduct->bindParam(':deleteID', $deleteUserID);
-            $removeFromProduct->execute();
-            echo "<script>alert('已刪除使用者相關所有資料'); window.location.href='manageAccounts.php';</script>";
+            $stmt3 = $db -> prepare("DELETE FROM `payment`  WHERE `OID` = :deleteOID");
+            $stmt3 -> bindParam(':deleteOID', $deleteOID);
+            $stmt3 -> execute();
+            echo "<script>alert('已刪除該訂單紀錄'); window.location.href='manageOrders.php';</script>";
             exit;
         }
     ?>
 
     <?php
-        if (($_SERVER['REQUEST_METHOD'] === "POST")&&($_POST['resetFlag'])){
-            include "database_connection.php";
-            //find username
-            $resetPasswordID = $_POST['resetPasswordID'];
-            $findUsername = $db -> prepare("SELECT username FROM `users` WHERE ID = :ID");
-            $findUsername -> bindParam(':ID', $resetPasswordID);
-            $findUsername -> execute();
-            $user = $findUsername -> fetch(PDO::FETCH_ASSOC);
-
-            $stmt = $db -> prepare("UPDATE `users` SET `password` = :newPassword WHERE ID = :resetPasswordID"); // await
-            $newPassword = password_hash($user['username'], PASSWORD_DEFAULT);
-            $stmt->bindParam(':newPassword', $newPassword);
-            $stmt->bindParam(':resetPasswordID', $resetPasswordID);
-            $stmt->execute();
-            echo "<script>alert('密碼已經更新為使用者名稱'); window.location.href='manageAccounts.php';</script>";
+        if (($_SERVER['REQUEST_METHOD'] === "POST")&&($_POST['inspectOID'])){
+            echo "<script>window.location.href='orderDetail.php?oid=".$_POST['OIDDetail']."';</script>";
+            // header("Location: orderDetail.php?oid=". $_POST['OIDDetail']);
             exit;
         }
     ?>

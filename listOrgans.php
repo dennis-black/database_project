@@ -341,6 +341,7 @@
                 <a href="organs.php" class="nav-item nav-link active">前往保鮮盒</a>
                 <a href="uploadOrgan.php" class="nav-item nav-link active" style="color: #00BB00;">上傳新物品</a>
                 <a href="cart.php" class="nav-item nav-link active">我的購物車</a>
+                <a href="myOrders.php" class="nav-item nav-link active">我的訂單</a>
                 <a href="myAccount.php" class="nav-item nav-link active"><?php echo "歡迎，". $_SESSION['userRealName'];?></a>
                 <!-- <a href="aboutUs" class="nav-item nav-link">關於我們</a> -->
             </div>

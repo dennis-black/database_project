@@ -227,6 +227,7 @@
                     if($_SESSION['role'] == "admin"){
                         echo '<a href="manageAccounts.php" class="nav-item nav-link active">管理使用者</a>
                         <a href="manageShelf.php" class="nav-item nav-link active">管理貨架</a>
+                        <a href="manageOrders.php" class="nav-item nav-link active">管理訂單</a>
                         <a href="myAccount.php" class="nav-item nav-link active">';
                          echo "歡迎，". $_SESSION['userRealName'] ."</a>";
                     }
